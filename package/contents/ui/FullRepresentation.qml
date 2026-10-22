@@ -56,7 +56,7 @@ FocusScope {
 
     Keys.onEscapePressed: {
         if (!goBack()) {
-            root.expanded = false
+            root.closeMenu()
         }
     }
 
@@ -81,46 +81,69 @@ FocusScope {
         anchors.fill: parent
         spacing: Kirigami.Units.largeSpacing
 
-        PlasmaExtras.SearchField {
-            id: searchField
-
+        RowLayout {
             Layout.fillWidth: true
             Layout.leftMargin: Kirigami.Units.gridUnit
-            Layout.rightMargin: Kirigami.Units.gridUnit
+            Layout.rightMargin: Kirigami.Units.smallSpacing
             Layout.topMargin: Kirigami.Units.smallSpacing
+            spacing: Kirigami.Units.smallSpacing
 
-            placeholderText: i18n("Wyszukaj aplikacje, ustawienia i dokumenty")
+            PlasmaExtras.SearchField {
+                id: searchField
 
-            // Kursor tekstowy nad całą pigułką pola, nie tylko nad samym
-            // wewnętrznym obszarem tekstu (paddingi i ikona lupy go gubią).
-            HoverHandler {
-                cursorShape: Qt.IBeamCursor
-            }
+                Layout.fillWidth: true
 
-            onTextChanged: {
-                runnerModel.query = text
-                const current = stack.currentItem
-                if (text.length > 0) {
-                    if (!current || current.objectName !== "searchPage") {
+                placeholderText: i18n("Wyszukaj aplikacje, ustawienia i dokumenty")
+
+                // Kursor tekstowy nad całą pigułką pola, nie tylko nad samym
+                // wewnętrznym obszarem tekstu (paddingi i ikona lupy go gubią).
+                HoverHandler {
+                    cursorShape: Qt.IBeamCursor
+                }
+
+                onTextChanged: {
+                    runnerModel.query = text
+                    const current = stack.currentItem
+                    if (text.length > 0) {
+                        if (!current || current.objectName !== "searchPage") {
+                            stack.pop(null, QQC2.StackView.Immediate)
+                            stack.push(Qt.resolvedUrl("SearchPage.qml"), {},
+                                       QQC2.StackView.Immediate)
+                        }
+                    } else if (current && current.objectName === "searchPage") {
                         stack.pop(null, QQC2.StackView.Immediate)
-                        stack.push(Qt.resolvedUrl("SearchPage.qml"), {},
-                                   QQC2.StackView.Immediate)
                     }
-                } else if (current && current.objectName === "searchPage") {
-                    stack.pop(null, QQC2.StackView.Immediate)
+                }
+                onAccepted: {
+                    const current = stack.currentItem
+                    if (current && current.activateFirst) {
+                        current.activateFirst()
+                    }
+                }
+                Keys.onDownPressed: {
+                    const current = stack.currentItem
+                    if (current && current.focusFirst) {
+                        current.focusFirst()
+                    }
                 }
             }
-            onAccepted: {
-                const current = stack.currentItem
-                if (current && current.activateFirst) {
-                    current.activateFirst()
-                }
-            }
-            Keys.onDownPressed: {
-                const current = stack.currentItem
-                if (current && current.focusFirst) {
-                    current.focusFirst()
-                }
+
+            // Przełącznik trybu pełnoekranowego — prawy górny narożnik,
+            // ten sam w obu trybach (popup i okno pełnoekranowe).
+            PC3.ToolButton {
+                id: fullscreenButton
+
+                icon.name: root.fullscreenMode ? "view-restore" : "view-fullscreen"
+                display: QQC2.AbstractButton.IconOnly
+                text: root.fullscreenMode
+                    ? i18n("Wyłącz tryb pełnoekranowy")
+                    : i18n("Tryb pełnoekranowy")
+
+                QQC2.ToolTip.text: text
+                QQC2.ToolTip.visible: hovered
+                QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
+
+                onClicked: root.setFullscreen(!root.fullscreenMode)
             }
         }
 
@@ -181,7 +204,7 @@ FocusScope {
 
                 onClicked: {
                     KCM.KCMLauncher.openSystemSettings("kcm_users")
-                    root.expanded = false
+                    root.closeMenu()
                 }
             }
 

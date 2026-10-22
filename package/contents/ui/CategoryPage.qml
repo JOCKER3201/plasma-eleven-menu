@@ -91,12 +91,12 @@ Item {
                         })
                     } else {
                         page.categoryModel.trigger(index, "", null)
-                        root.expanded = false
+                        root.closeMenu()
                     }
                 }
                 onActionTriggered: (actionId, argument) => {
                     if (page.categoryModel.trigger(index, actionId, argument)) {
-                        root.expanded = false
+                        root.closeMenu()
                     }
                 }
             }

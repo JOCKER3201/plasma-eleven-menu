@@ -26,5 +26,9 @@
             <label>Akcje pokazywane w menu zasilania, w kolejności wyświetlania.</label>
             <default>lock-screen,suspend,shutdown,reboot</default>
         </entry>
+        <entry name="fullscreen" type="Bool">
+            <label>Czy menu otwiera się w trybie pełnoekranowym (wypełnia obszar roboczy, panele zostają widoczne).</label>
+            <default>false</default>
+        </entry>
     </group>
 </kcfg>
