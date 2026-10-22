@@ -52,10 +52,15 @@ PlasmoidItem {
         }
     }
 
-    // Panele z autoukrywaniem wysuwają się na czas otwartego menu
-    // pełnoekranowego (status appletu jak przy otwartym popupie).
+    // Panele z autoukrywaniem wysuwają się na czas otwartego menu.
+    // Celowo NeedsAttentionStatus, NIE AcceptingInputStatus: ten drugi
+    // każe panelowi przejąć focus klawiatury i wymusić aktywację
+    // pierwszego elementu panelu (PanelView::refreshStatus), przez co
+    // najechanie na inny aplet w trakcie otwierania aktywowało go
+    // zamiast menu. NeedsAttention tylko pokazuje panel (bez focusu),
+    // a PanelView::restoreAutoHide nie chowa go, dopóki status >= NeedsAttention.
     Plasmoid.status: fullscreenDialog.visible || popupDialog.visible
-        ? PlasmaCore.Types.AcceptingInputStatus
+        ? PlasmaCore.Types.NeedsAttentionStatus
         : PlasmaCore.Types.ActiveStatus
 
     function closeMenu() {
