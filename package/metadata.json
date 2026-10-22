@@ -1,0 +1,31 @@
+{
+    "KPackageStructure": "Plasma/Applet",
+    "KPlugin": {
+        "Authors": [
+            {
+                "Email": "michaelfurtak@tutanota.com",
+                "Name": "Michael Furtak"
+            },
+            {
+                "Name": "Claude (Anthropic) — kod wygenerowany przez AI"
+            }
+        ],
+        "Category": "Application Launchers",
+        "Description": "Application launcher in the Windows 11 Start menu layout, with KDE category folders",
+        "Description[pl]": "Menu aplikacji w układzie menu Start z Windows 11, z folderami kategorii KDE",
+        "FormFactors": [
+            "desktop",
+            "horizontal",
+            "vertical"
+        ],
+        "Icon": "start-here-kde-plasma",
+        "Id": "com.github.jocker3201.elevenmenu",
+        "License": "MIT",
+        "Name": "plasma-eleven-menu",
+        "Version": "0.1.0"
+    },
+    "X-Plasma-API-Minimum-Version": "6.0",
+    "X-Plasma-Provides": [
+        "org.kde.plasma.launchermenu"
+    ]
+}

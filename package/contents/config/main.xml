@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kcfg xmlns="http://www.kde.org/standards/kcfg/1.0"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="http://www.kde.org/standards/kcfg/1.0
+      http://www.kde.org/standards/kcfg/1.0/kcfg.xsd">
+    <kcfgfile name=""/>
+
+    <group name="General">
+        <entry name="icon" type="String">
+            <label>Ikona pokazywana w panelu.</label>
+            <default>start-here-kde-plasma</default>
+        </entry>
+        <entry name="favorites" type="StringList">
+            <label>Początkowa lista przypiętych aplikacji (tylko pierwsze uruchomienie).</label>
+            <default>preferred://browser,org.kde.dolphin.desktop,org.kde.konsole.desktop,systemsettings.desktop</default>
+        </entry>
+        <entry name="favoritesSeeded" type="Bool">
+            <label>Czy początkowa lista przypiętych została już wczytana do bazy ulubionych.</label>
+            <default>false</default>
+        </entry>
+        <entry name="showPinned" type="Bool">
+            <label>Czy pokazywać sekcję Przypięte na stronie głównej.</label>
+            <default>true</default>
+        </entry>
+        <entry name="powerActions" type="StringList">
+            <label>Akcje pokazywane w menu zasilania, w kolejności wyświetlania.</label>
+            <default>lock-screen,suspend,shutdown,reboot</default>
+        </entry>
+    </group>
+</kcfg>
