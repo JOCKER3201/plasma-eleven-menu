@@ -8,15 +8,14 @@
 */
 
 import QtQuick
+import QtQuick.Layouts
 import org.kde.plasma.plasmoid
+import org.kde.plasma.core as PlasmaCore
 import org.kde.plasma.private.kicker as Kicker
 import org.kde.kirigami as Kirigami
 
 PlasmoidItem {
     id: root
-
-    switchWidth: Kirigami.Units.gridUnit * 22
-    switchHeight: Kirigami.Units.gridUnit * 26
 
     Plasmoid.icon: Plasmoid.configuration.icon
 
@@ -25,63 +24,79 @@ PlasmoidItem {
 
     hideOnWindowDeactivate: true
 
-    // Klikiem ikony sterujemy sami (togglePrimary), bo w trybie
-    // pełnoekranowym otwiera się dialog pełnoekranowy zamiast popupu.
-    activationTogglesExpanded: false
-
     // Tryb pełnoekranowy: plazmowy dialog na cały ekran (pod panelami).
     readonly property bool fullscreenMode:
         Plasmoid.configuration.fullscreen === true
 
-    function togglePrimary() {
-        if (fullscreenMode) {
-            root.expanded = false
-            fullscreenDialog.toggle()
-        } else {
-            fullscreenDialog.closeMenu()
-            root.expanded = !root.expanded
+    // Wzorzec jak w Application Dashboard (kickerdash, zweryfikowany
+    // w źródłach Plasmy 6.7.5): IKONA w panelu jest fullRepresentation
+    // renderowaną inline (preferred == full, bez switchWidth/Height applet
+    // nigdy nie przechodzi w tryb collapsed), więc wbudowany popup/expander
+    // fizycznie nie może powstać i niczego nie dubluje. Oba widoki menu —
+    // popup i pełny ekran — są własnymi dialogami, sterowanymi wyłącznie
+    // przez toggle() (klik ikony i Plasmoid.onActivated, czyli Super).
+    preferredRepresentation: fullRepresentation
+
+    // "activated" (Super/skrót launchera) nie ma ruszać "expanded".
+    activationTogglesExpanded: false
+
+    // Aktualnie wybrany widok menu.
+    readonly property var activeDialog:
+        fullscreenMode ? fullscreenDialog : popupDialog
+
+    // Klawisz Super / globalny skrót appletu.
+    Connections {
+        target: Plasmoid
+        function onActivated() {
+            root.activeDialog.toggle()
         }
     }
 
+    // Panele z autoukrywaniem wysuwają się na czas otwartego menu
+    // pełnoekranowego (status appletu jak przy otwartym popupie).
+    Plasmoid.status: fullscreenDialog.visible || popupDialog.visible
+        ? PlasmaCore.Types.AcceptingInputStatus
+        : PlasmaCore.Types.ActiveStatus
+
     function closeMenu() {
-        root.expanded = false
+        popupDialog.closeMenu()
         fullscreenDialog.closeMenu()
     }
 
     function setFullscreen(on) {
-        Plasmoid.configuration.fullscreen = on
         if (on) {
-            root.expanded = false
-            fullscreenDialog.openMenu()
+            popupDialog.closeMenu()
         } else {
             fullscreenDialog.closeMenu()
-            root.expanded = true
         }
+        Plasmoid.configuration.fullscreen = on
+        activeDialog.openMenu()
     }
 
-    // Globalny skrót klawiszowy appletu.
-    Connections {
-        target: Plasmoid
-        function onActivated() {
-            root.togglePrimary()
-        }
-    }
+    fullRepresentation: MouseArea {
+        id: iconRoot
 
-    compactRepresentation: MouseArea {
-        id: compactRoot
+        Layout.minimumWidth: -1
+        Layout.minimumHeight: -1
+        Layout.maximumWidth: Kirigami.Units.iconSizes.huge
+        Layout.maximumHeight: Kirigami.Units.iconSizes.huge
 
         hoverEnabled: true
-        onClicked: root.togglePrimary()
+        onClicked: root.activeDialog.toggle()
 
         Kirigami.Icon {
             anchors.fill: parent
             source: Plasmoid.icon
-            active: compactRoot.containsMouse
+            active: iconRoot.containsMouse
         }
     }
 
     FullscreenDialog {
         id: fullscreenDialog
+    }
+
+    PopupDialog {
+        id: popupDialog
     }
 
     // Główne źródło danych menu: kategorie aplikacji dokładnie takie,
@@ -143,6 +158,4 @@ PlasmoidItem {
 
         rootModel.refresh()
     }
-
-    fullRepresentation: FullRepresentation {}
 }

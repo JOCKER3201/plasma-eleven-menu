@@ -45,15 +45,6 @@ FocusScope {
         return false
     }
 
-    Connections {
-        target: root
-        function onExpandedChanged() {
-            if (root.expanded) {
-                fullRep.reset()
-            }
-        }
-    }
-
     Keys.onEscapePressed: {
         if (!goBack()) {
             root.closeMenu()
