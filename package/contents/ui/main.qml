@@ -44,6 +44,29 @@ PlasmoidItem {
     readonly property var activeDialog:
         fullscreenMode ? fullscreenDialog : popupDialog
 
+    // Obszar wolny od paneli, ZNORMALIZOWANY do układu lokalnego ekranu
+    // (0,0 = lewy górny róg ekranu appletu). availableScreenRect bywa
+    // raportowane lokalnie (na monitorach przesuniętych w układzie
+    // globalnym) albo globalnie — sprowadzamy oba warianty do jednego.
+    // Pusty prostokąt => cały ekran. Wspólne dla obu dialogów.
+    readonly property rect localFreeArea: {
+        const sg = root.screenGeometry
+        const ar = root.availableScreenRect
+        if (!ar || ar.width <= 0 || ar.height <= 0) {
+            return Qt.rect(0, 0, sg.width, sg.height)
+        }
+        if (ar.x >= sg.x && ar.y >= sg.y
+                && ar.x + ar.width <= sg.x + sg.width + 1
+                && ar.y + ar.height <= sg.y + sg.height + 1) {
+            return Qt.rect(ar.x - sg.x, ar.y - sg.y, ar.width, ar.height)
+        }
+        return Qt.rect(
+            Math.max(0, ar.x),
+            Math.max(0, ar.y),
+            Math.min(ar.width, sg.width),
+            Math.min(ar.height, sg.height))
+    }
+
     // Klawisz Super / globalny skrót appletu.
     Connections {
         target: Plasmoid
@@ -78,6 +101,11 @@ PlasmoidItem {
         activeDialog.openMenu()
     }
 
+    // Okno panelu, w którym siedzi ikona — do wyliczania odstępu
+    // pływającego panelu od krawędzi ekranu (PopupDialog).
+    readonly property var panelWindow:
+        fullRepresentationItem ? fullRepresentationItem.panelWindow : null
+
     fullRepresentation: MouseArea {
         id: iconRoot
 
@@ -85,6 +113,8 @@ PlasmoidItem {
         Layout.minimumHeight: -1
         Layout.maximumWidth: Kirigami.Units.iconSizes.huge
         Layout.maximumHeight: Kirigami.Units.iconSizes.huge
+
+        readonly property var panelWindow: Window.window
 
         hoverEnabled: true
         onClicked: root.activeDialog.toggle()
