@@ -30,5 +30,13 @@
             <label>Czy menu otwiera się w trybie pełnoekranowym (wypełnia obszar roboczy, panele zostają widoczne).</label>
             <default>false</default>
         </entry>
+        <entry name="popupOffsetX" type="Int">
+            <label>Przesunięcie poziome zwykłego menu w pikselach; 0 = środek ekranu.</label>
+            <default>0</default>
+        </entry>
+        <entry name="popupOffsetY" type="Int">
+            <label>Przesunięcie pionowe zwykłego menu w pikselach; 0 = odstęp od panelu równy odstępowi panelu od krawędzi ekranu.</label>
+            <default>0</default>
+        </entry>
     </group>
 </kcfg>

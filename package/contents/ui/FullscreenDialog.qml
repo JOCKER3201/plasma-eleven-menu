@@ -28,32 +28,6 @@ PlasmaCore.Dialog {
     x: root.screenGeometry.x
     y: root.screenGeometry.y
 
-    // Obszar wolny od paneli, ZNORMALIZOWANY do układu lokalnego ekranu
-    // (0,0 = lewy górny róg ekranu appletu). availableScreenRect bywa
-    // raportowane lokalnie (na monitorach przesuniętych w układzie
-    // globalnym, np. drugi monitor od x=2560) albo globalnie — tu
-    // sprowadzamy oba warianty do jednego. Pusty prostokąt => cały ekran.
-    readonly property rect localFreeArea: {
-        const sg = root.screenGeometry
-        const ar = root.availableScreenRect
-        if (!ar || ar.width <= 0 || ar.height <= 0) {
-            return Qt.rect(0, 0, sg.width, sg.height)
-        }
-        // Wariant globalny: prostokąt mieści się w globalnej geometrii
-        // ekranu — przesuwamy do układu lokalnego.
-        if (ar.x >= sg.x && ar.y >= sg.y
-                && ar.x + ar.width <= sg.x + sg.width + 1
-                && ar.y + ar.height <= sg.y + sg.height + 1) {
-            return Qt.rect(ar.x - sg.x, ar.y - sg.y, ar.width, ar.height)
-        }
-        // Wariant lokalny: przycinamy do rozmiaru ekranu dla pewności.
-        return Qt.rect(
-            Math.max(0, ar.x),
-            Math.max(0, ar.y),
-            Math.min(ar.width, sg.width),
-            Math.min(ar.height, sg.height))
-    }
-
     // Chwila rozpoczęcia ostatniego zamykania — kliknięcie ikony w panelu
     // najpierw dezaktywuje dialog (co uruchamia zamykanie), a dopiero potem
     // przełącza stan; bez tej blokady ikona nie umiałaby zamykać menu.
@@ -117,15 +91,15 @@ PlasmaCore.Dialog {
 
             anchors.fill: parent
             anchors.leftMargin: Kirigami.Units.gridUnit
-                + Math.max(0, dlg.localFreeArea.x)
+                + Math.max(0, root.localFreeArea.x)
             anchors.topMargin: Kirigami.Units.gridUnit
-                + Math.max(0, dlg.localFreeArea.y)
+                + Math.max(0, root.localFreeArea.y)
             anchors.rightMargin: Kirigami.Units.gridUnit + Math.max(0,
                 root.screenGeometry.width
-                - dlg.localFreeArea.x - dlg.localFreeArea.width)
+                - root.localFreeArea.x - root.localFreeArea.width)
             anchors.bottomMargin: Kirigami.Units.gridUnit + Math.max(0,
                 root.screenGeometry.height
-                - dlg.localFreeArea.y - dlg.localFreeArea.height)
+                - root.localFreeArea.y - root.localFreeArea.height)
 
             focus: true
         }
