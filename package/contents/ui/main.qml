@@ -25,6 +25,65 @@ PlasmoidItem {
 
     hideOnWindowDeactivate: true
 
+    // Klikiem ikony sterujemy sami (togglePrimary), bo w trybie
+    // pełnoekranowym otwiera się dialog pełnoekranowy zamiast popupu.
+    activationTogglesExpanded: false
+
+    // Tryb pełnoekranowy: plazmowy dialog na cały ekran (pod panelami).
+    readonly property bool fullscreenMode:
+        Plasmoid.configuration.fullscreen === true
+
+    function togglePrimary() {
+        if (fullscreenMode) {
+            root.expanded = false
+            fullscreenDialog.toggle()
+        } else {
+            fullscreenDialog.closeMenu()
+            root.expanded = !root.expanded
+        }
+    }
+
+    function closeMenu() {
+        root.expanded = false
+        fullscreenDialog.closeMenu()
+    }
+
+    function setFullscreen(on) {
+        Plasmoid.configuration.fullscreen = on
+        if (on) {
+            root.expanded = false
+            fullscreenDialog.openMenu()
+        } else {
+            fullscreenDialog.closeMenu()
+            root.expanded = true
+        }
+    }
+
+    // Globalny skrót klawiszowy appletu.
+    Connections {
+        target: Plasmoid
+        function onActivated() {
+            root.togglePrimary()
+        }
+    }
+
+    compactRepresentation: MouseArea {
+        id: compactRoot
+
+        hoverEnabled: true
+        onClicked: root.togglePrimary()
+
+        Kirigami.Icon {
+            anchors.fill: parent
+            source: Plasmoid.icon
+            active: compactRoot.containsMouse
+        }
+    }
+
+    FullscreenDialog {
+        id: fullscreenDialog
+    }
+
     // Główne źródło danych menu: kategorie aplikacji dokładnie takie,
     // jakich używają Kickoff i Kicker (standardowe kategorie XDG).
     Kicker.RootModel {

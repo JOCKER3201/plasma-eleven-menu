@@ -27,6 +27,14 @@ Windows 11 — ale zasilane prawdziwymi danymi menu KDE.
   Enter uruchamia najlepszy wynik.
 - **Stopka** — awatar i nazwa użytkownika oraz przycisk zasilania z menu:
   Zablokuj / Uśpij / Zamknij / Uruchom ponownie (zestaw konfigurowalny).
+- **Tryb pełnoekranowy** — przycisk w prawym górnym narożniku (w obu
+  trybach) przełącza między popupem a **pełnoekranowym dialogiem
+  plazmowym**, który otwiera się animacją od środka ekranu. Dialog żyje
+  w warstwie zwykłych okien, więc panele Plasmy pozostają widoczne
+  i klikalne **nad** menu (nie są przykrywane jak w innych launcherach),
+  a zawartość menu ma marginesy wyliczone z geometrii paneli — nic nie
+  wpada pod panel. Wybrany tryb jest zapamiętywany; ikona w panelu
+  otwiera zawsze aktualnie wybrany wariant.
 - **Ustawienia** (prawy przycisk na ikonie → *Konfiguruj…*): ikona panelu,
   widoczność sekcji Przypięte, akcje menu zasilania.
 - Nawigacja: `Esc` cofa (czyści wyszukiwanie → zamyka folder → zamyka menu).

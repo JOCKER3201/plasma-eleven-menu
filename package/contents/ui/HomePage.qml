@@ -64,11 +64,11 @@ Flickable {
                 favoriteId: model.favoriteId ?? ""
                 onTriggered: {
                     rootModel.favoritesModel.trigger(index, "", null)
-                    root.expanded = false
+                    root.closeMenu()
                 }
                 onActionTriggered: (actionId, argument) => {
                     if (rootModel.favoritesModel.trigger(index, actionId, argument)) {
-                        root.expanded = false
+                        root.closeMenu()
                     }
                 }
             }

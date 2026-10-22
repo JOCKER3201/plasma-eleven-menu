@@ -19,7 +19,7 @@ Item {
     function activateFirst() {
         if (resultsList.count > 0) {
             resultsList.model.trigger(0, "", null)
-            root.expanded = false
+            root.closeMenu()
         }
     }
 
@@ -57,7 +57,7 @@ Item {
 
             onClicked: {
                 resultsList.model.trigger(index, "", null)
-                root.expanded = false
+                root.closeMenu()
             }
 
             // Standardowe menu kontekstowe launchera, jak na kafelkach.
@@ -84,7 +84,7 @@ Item {
                 visualParent: resultDelegate
                 onActionClicked: (actionId, argument) => {
                     if (resultsList.model.trigger(index, actionId, argument)) {
-                        root.expanded = false
+                        root.closeMenu()
                     }
                 }
             }
@@ -127,7 +127,7 @@ Item {
             } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
                 if (resultsList.currentIndex >= 0) {
                     resultsList.model.trigger(resultsList.currentIndex, "", null)
-                    root.expanded = false
+                    root.closeMenu()
                 }
                 event.accepted = true
             }

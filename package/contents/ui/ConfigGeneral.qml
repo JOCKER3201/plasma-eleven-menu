@@ -23,12 +23,14 @@ KCM.SimpleKCM {
     property bool cfg_favoritesSeeded
     property bool cfg_showPinned
     property var cfg_powerActions: []
+    property bool cfg_fullscreen
 
     property string cfg_iconDefault
     property var cfg_favoritesDefault: []
     property bool cfg_favoritesSeededDefault
     property bool cfg_showPinnedDefault
     property var cfg_powerActionsDefault: []
+    property bool cfg_fullscreenDefault
 
     // Wszystkie dostępne akcje zasilania w ustalonej kolejności wyświetlania.
     readonly property var allPowerActions: [
