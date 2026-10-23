@@ -33,15 +33,25 @@ PlasmaCore.Dialog {
     // przełącza stan; bez tej blokady ikona nie umiałaby zamykać menu.
     property double lastClosedAt: 0
 
+    // Animacja otwarcia czeka na pierwszą WYRENDEROWANĄ klatkę okna.
+    property bool pendingOpen: false
+
     function openMenu() {
         if (Date.now() - lastClosedAt < 300) {
             return
         }
         closeAnimation.stop()
+        openAnimation.stop()
+        // Stan początkowy PRZED pokazaniem: pierwsza (jednorazowo kosztowna
+        // przy zimnym starcie) klatka renderuje się niewidocznie, a zegar
+        // animacji nie biegnie, zanim cokolwiek trafi na ekran.
+        screenItem.scale = 0.6
+        screenItem.opacity = 0.0
+        pendingOpen = true
         visible = true
         requestActivate()
         fsContent.reset()
-        openAnimation.restart()
+        firstFrameFallback.restart()
         // Panele z autoukrywaniem/unikaniem okien na tym ekranie mają
         // zostać widoczne przez cały czas otwarcia menu.
         root.suspendPanelHiding()
@@ -105,6 +115,32 @@ PlasmaCore.Dialog {
                 - root.localFreeArea.y - root.localFreeArea.height)
 
             focus: true
+        }
+
+        // Start animacji od pierwszej pokazanej klatki; Timer to bezpiecznik
+        // na wypadek, gdyby klatka nie nadeszła (menu nigdy nie utknie).
+        Connections {
+            target: dlg
+            ignoreUnknownSignals: true
+            function onFrameSwapped() {
+                if (dlg.pendingOpen) {
+                    dlg.pendingOpen = false
+                    firstFrameFallback.stop()
+                    openAnimation.restart()
+                }
+            }
+        }
+
+        Timer {
+            id: firstFrameFallback
+            interval: 100
+            repeat: false
+            onTriggered: {
+                if (dlg.pendingOpen) {
+                    dlg.pendingOpen = false
+                    openAnimation.restart()
+                }
+            }
         }
 
         ParallelAnimation {

@@ -72,15 +72,26 @@ PlasmaCore.Dialog {
     // potem dociera do nas; bez tej blokady ikona nie umiałaby zamykać.
     property double lastClosedAt: 0
 
+    // Animacja otwarcia czeka na pierwszą WYRENDEROWANĄ klatkę okna.
+    property bool pendingOpen: false
+
     function openMenu() {
         if (Date.now() - lastClosedAt < 300) {
             return
         }
         closeAnimation.stop()
+        openAnimation.stop()
+        // Stan początkowy PRZED pokazaniem: pierwsza (jednorazowo kosztowna
+        // przy zimnym starcie) klatka renderuje się niewidocznie, a zegar
+        // animacji nie biegnie, zanim cokolwiek trafi na ekran — inaczej
+        // animacja "mija" podczas budowy sceny i menu pojawia się skokiem.
+        popupRoot.scale = 0.6
+        popupRoot.opacity = 0.0
+        pendingOpen = true
         visible = true
         requestActivate()
         content.reset()
-        openAnimation.restart()
+        firstFrameFallback.restart()
     }
 
     function closeMenu() {
@@ -134,6 +145,32 @@ PlasmaCore.Dialog {
             id: content
             anchors.fill: parent
             focus: true
+        }
+
+        // Start animacji od pierwszej pokazanej klatki; Timer to bezpiecznik
+        // na wypadek, gdyby klatka nie nadeszła (menu nigdy nie utknie).
+        Connections {
+            target: dlg
+            ignoreUnknownSignals: true
+            function onFrameSwapped() {
+                if (dlg.pendingOpen) {
+                    dlg.pendingOpen = false
+                    firstFrameFallback.stop()
+                    openAnimation.restart()
+                }
+            }
+        }
+
+        Timer {
+            id: firstFrameFallback
+            interval: 100
+            repeat: false
+            onTriggered: {
+                if (dlg.pendingOpen) {
+                    dlg.pendingOpen = false
+                    openAnimation.restart()
+                }
+            }
         }
 
         ParallelAnimation {
