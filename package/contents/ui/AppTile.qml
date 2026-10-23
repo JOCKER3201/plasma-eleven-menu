@@ -22,7 +22,7 @@ QQC2.AbstractButton {
     signal actionTriggered(string actionId, var argument)
 
     hoverEnabled: true
-    padding: Kirigami.Units.smallSpacing
+    padding: Math.max(1, Math.round(Kirigami.Units.smallSpacing / 2))
 
     onClicked: triggered()
 
@@ -30,7 +30,7 @@ QQC2.AbstractButton {
         Column {
             anchors.verticalCenter: parent.verticalCenter
             width: parent.width
-            spacing: Kirigami.Units.smallSpacing
+            spacing: Math.max(1, Math.round(Kirigami.Units.smallSpacing / 2))
 
             Kirigami.Icon {
                 anchors.horizontalCenter: parent.horizontalCenter
