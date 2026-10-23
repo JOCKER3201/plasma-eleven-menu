@@ -41,8 +41,8 @@ Flickable {
         GridView {
             id: pinnedGrid
 
-            readonly property int columns:
-                Math.max(4, Math.floor(width / (Kirigami.Units.gridUnit * 5)))
+            readonly property int columns: Math.max(2, Math.floor(
+                width / (Kirigami.Units.gridUnit * 4.5 * root.iconScale)))
 
             Layout.fillWidth: true
             Layout.leftMargin: Kirigami.Units.gridUnit
@@ -52,7 +52,7 @@ Flickable {
             visible: Plasmoid.configuration.showPinned && count > 0
             interactive: false
             cellWidth: Math.floor(width / columns)
-            cellHeight: Kirigami.Units.gridUnit * 5
+            cellHeight: root.appIconSize + Math.round(Kirigami.Units.gridUnit * 2.5)
 
             model: rootModel.favoritesModel
 
@@ -61,6 +61,7 @@ Flickable {
                 height: pinnedGrid.cellHeight
                 text: model.display
                 iconSource: model.decoration
+                iconSize: root.appIconSize
                 favoriteId: model.favoriteId ?? ""
                 onTriggered: {
                     rootModel.favoritesModel.trigger(index, "", null)
@@ -85,8 +86,8 @@ Flickable {
         GridView {
             id: categoriesGrid
 
-            readonly property int columns:
-                Math.max(3, Math.floor(width / (Kirigami.Units.gridUnit * 9)))
+            readonly property int columns: Math.max(2, Math.floor(
+                width / (Kirigami.Units.gridUnit * 9 * root.iconScale)))
 
             Layout.fillWidth: true
             Layout.leftMargin: Kirigami.Units.gridUnit

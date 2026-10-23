@@ -24,6 +24,7 @@ KCM.SimpleKCM {
     property bool cfg_showPinned
     property var cfg_powerActions: []
     property bool cfg_fullscreen
+    property int cfg_iconSize
     property int cfg_popupOffsetX
     property int cfg_popupOffsetY
     property int cfg_popupSizeIncrease
@@ -35,6 +36,7 @@ KCM.SimpleKCM {
     property bool cfg_showPinnedDefault
     property var cfg_powerActionsDefault: []
     property bool cfg_fullscreenDefault
+    property int cfg_iconSizeDefault
     property int cfg_popupOffsetXDefault
     property int cfg_popupOffsetYDefault
     property int cfg_popupSizeIncreaseDefault
@@ -108,6 +110,37 @@ KCM.SimpleKCM {
             text: i18n("Pokazuj sekcję Przypięte")
             checked: configGeneral.cfg_showPinned
             onToggled: configGeneral.cfg_showPinned = checked
+        }
+
+        RowLayout {
+            Kirigami.FormData.label: i18n("Wielkość ikon:")
+            spacing: Kirigami.Units.smallSpacing
+
+            QQC2.Slider {
+                Layout.preferredWidth: Kirigami.Units.gridUnit * 12
+                from: 16
+                to: 64
+                stepSize: 2
+                value: configGeneral.cfg_iconSize
+                onMoved: configGeneral.cfg_iconSize = Math.round(value)
+            }
+
+            QQC2.Label {
+                Layout.preferredWidth: Kirigami.Units.gridUnit * 3.5
+                horizontalAlignment: Text.AlignRight
+                text: i18n("%1 px", configGeneral.cfg_iconSize)
+            }
+
+            QQC2.ToolButton {
+                icon.name: "edit-undo"
+                enabled: configGeneral.cfg_iconSize !== 32
+
+                QQC2.ToolTip.text: i18n("Przywróć domyślną wielkość (32 px)")
+                QQC2.ToolTip.visible: hovered
+                QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
+
+                onClicked: configGeneral.cfg_iconSize = 32
+            }
         }
 
         Item {

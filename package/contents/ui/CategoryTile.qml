@@ -42,7 +42,8 @@ QQC2.AbstractButton {
             border.color: Kirigami.Theme.highlightColor
             clip: true
 
-            // Podgląd zawartości: pierwsze cztery ikony aplikacji (2×2).
+            // Podgląd zawartości: pierwsze cztery ikony aplikacji (2×2);
+            // wielkość mini-ikon idzie za ustawieniem wielkości ikon.
             GridView {
                 id: miniGrid
 
@@ -50,7 +51,7 @@ QQC2.AbstractButton {
                 width: cellWidth * 2
                 height: cellHeight * 2
 
-                cellWidth: Kirigami.Units.iconSizes.medium + Kirigami.Units.smallSpacing * 2
+                cellWidth: root.appIconSize + Kirigami.Units.smallSpacing
                 cellHeight: cellWidth
 
                 interactive: false
@@ -65,7 +66,7 @@ QQC2.AbstractButton {
 
                     Kirigami.Icon {
                         anchors.centerIn: parent
-                        width: Kirigami.Units.iconSizes.medium
+                        width: root.appIconSize
                         height: width
                         source: model.decoration
                     }

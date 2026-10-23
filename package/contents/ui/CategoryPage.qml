@@ -59,8 +59,8 @@ Item {
         GridView {
             id: appsGrid
 
-            readonly property int columns:
-                Math.max(4, Math.floor(width / (Kirigami.Units.gridUnit * 6)))
+            readonly property int columns: Math.max(2, Math.floor(
+                width / (Kirigami.Units.gridUnit * 5 * root.iconScale)))
 
             Layout.fillWidth: true
             Layout.fillHeight: true
@@ -69,7 +69,7 @@ Item {
 
             clip: true
             cellWidth: Math.floor(width / columns)
-            cellHeight: Kirigami.Units.gridUnit * 5.5
+            cellHeight: root.appIconSize + Math.round(Kirigami.Units.gridUnit * 2.5)
 
             model: page.categoryModel
 
@@ -80,6 +80,7 @@ Item {
                 height: appsGrid.cellHeight
                 text: model.display
                 iconSource: model.decoration
+                iconSize: root.appIconSize
                 favoriteId: model.favoriteId ?? ""
                 onTriggered: {
                     if (model.hasChildren) {

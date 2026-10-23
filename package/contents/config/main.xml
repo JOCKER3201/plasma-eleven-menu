@@ -22,6 +22,10 @@
             <label>Czy pokazywać sekcję Przypięte na stronie głównej.</label>
             <default>true</default>
         </entry>
+        <entry name="iconSize" type="Int">
+            <label>Wielkość ikon aplikacji w pikselach; skaluje też kafelki kategorii.</label>
+            <default>32</default>
+        </entry>
         <entry name="powerActions" type="StringList">
             <label>Akcje pokazywane w menu zasilania, w kolejności wyświetlania.</label>
             <default>lock-screen,suspend,shutdown,reboot</default>
