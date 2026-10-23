@@ -52,6 +52,14 @@ Windows 11 — ale zasilane prawdziwymi danymi menu KDE.
 ## Instalacja
 
 ```bash
+make install        # instalacja/aktualizacja dla bieżącego użytkownika
+sudo make install   # instalacja/aktualizacja globalna (systemowa)
+make package        # archiwum plasma-eleven-menu-<wersja>.tar.xz
+```
+
+Ręcznie, bez make:
+
+```bash
 kpackagetool6 --type Plasma/Applet --install package
 # aktualizacja po zmianach:
 kpackagetool6 --type Plasma/Applet --upgrade package
