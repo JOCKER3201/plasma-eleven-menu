@@ -26,6 +26,7 @@ KCM.SimpleKCM {
     property bool cfg_fullscreen
     property int cfg_popupOffsetX
     property int cfg_popupOffsetY
+    property int cfg_popupSizeIncrease
 
     property string cfg_iconDefault
     property var cfg_favoritesDefault: []
@@ -35,6 +36,7 @@ KCM.SimpleKCM {
     property bool cfg_fullscreenDefault
     property int cfg_popupOffsetXDefault
     property int cfg_popupOffsetYDefault
+    property int cfg_popupSizeIncreaseDefault
 
     // Wszystkie dostępne akcje zasilania w ustalonej kolejności wyświetlania.
     readonly property var allPowerActions: [
@@ -173,6 +175,37 @@ KCM.SimpleKCM {
                 QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
 
                 onClicked: configGeneral.cfg_popupOffsetY = 0
+            }
+        }
+
+        RowLayout {
+            Kirigami.FormData.label: i18n("Powiększenie menu:")
+            spacing: Kirigami.Units.smallSpacing
+
+            QQC2.Slider {
+                Layout.preferredWidth: Kirigami.Units.gridUnit * 12
+                from: 0
+                to: 100
+                stepSize: 1
+                value: configGeneral.cfg_popupSizeIncrease
+                onMoved: configGeneral.cfg_popupSizeIncrease = Math.round(value)
+            }
+
+            QQC2.Label {
+                Layout.preferredWidth: Kirigami.Units.gridUnit * 3.5
+                horizontalAlignment: Text.AlignRight
+                text: i18n("+%1%", configGeneral.cfg_popupSizeIncrease)
+            }
+
+            QQC2.ToolButton {
+                icon.name: "edit-undo"
+                enabled: configGeneral.cfg_popupSizeIncrease !== 0
+
+                QQC2.ToolTip.text: i18n("Przywróć rozmiar domyślny")
+                QQC2.ToolTip.visible: hovered
+                QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
+
+                onClicked: configGeneral.cfg_popupSizeIncrease = 0
             }
         }
 

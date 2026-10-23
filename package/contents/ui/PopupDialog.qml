@@ -111,8 +111,12 @@ PlasmaCore.Dialog {
     mainItem: Item {
         id: popupRoot
 
-        width: Kirigami.Units.gridUnit * 30
-        height: Kirigami.Units.gridUnit * 36
+        // Rozmiar bazowy powiększany procentowo z ustawień (0% = domyślny).
+        readonly property real sizeFactor:
+            1 + Plasmoid.configuration.popupSizeIncrease / 100
+
+        width: Math.round(Kirigami.Units.gridUnit * 30 * sizeFactor)
+        height: Math.round(Kirigami.Units.gridUnit * 36 * sizeFactor)
 
         transformOrigin: Item.Center
 
