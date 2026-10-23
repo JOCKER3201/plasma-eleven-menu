@@ -52,8 +52,12 @@ Windows 11 — ale zasilane prawdziwymi danymi menu KDE.
 ## Instalacja
 
 ```bash
+git clone https://github.com/JOCKER3201/plasma-eleven-menu.git
+cd plasma-eleven-menu
+
 make install        # instalacja/aktualizacja dla bieżącego użytkownika
 sudo make install   # instalacja/aktualizacja globalna (systemowa)
+make uninstall      # usunięcie (sudo make uninstall — wersji globalnej)
 make package        # archiwum plasma-eleven-menu-<wersja>.tar.xz
 ```
 
