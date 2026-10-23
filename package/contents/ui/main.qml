@@ -95,8 +95,8 @@ PlasmoidItem {
     // --- Zawieszanie ukrywania paneli na czas menu pełnoekranowego ---
     // Status appletu trzyma widoczny tylko panel-gospodarza; pozostałe
     // panele ekranu (autoukrywanie / unikanie okien) przełączamy przez
-    // interfejs skryptowy plasmashell na "none" i przywracamy przy
-    // zamknięciu. Kopia trybów trafia do konfiguracji appletu, więc po
+    // interfejs skryptowy plasmashell na "windowsgobelow" (widoczne nad
+    // oknami, bez rezerwowania miejsca) i przywracamy przy zamknięciu. Kopia trybów trafia do konfiguracji appletu, więc po
     // ewentualnej awarii stan naprawia się przy następnym starcie.
 
     P5Support.DataSource {
@@ -139,7 +139,7 @@ PlasmoidItem {
             + ' if (g.x==sx && g.y==sy'
             + '     && (p.hiding=="autohide" || p.hiding=="dodgewindows")) {'
             + '  saved.push(String(p.screen)+";"+p.location+";"+p.hiding);'
-            + '  p.hiding="none";'
+            + '  p.hiding="windowsgobelow";'
             + ' }'
             + '}'
             + 'print(JSON.stringify(saved));'
@@ -149,20 +149,37 @@ PlasmoidItem {
     function restorePanelHiding() {
         const backup = Plasmoid.configuration.panelHidingBackup
         if (!backup || backup.length === 0) {
+            // Kopia mogła jeszcze nie dojechać (zapisuje ją asynchroniczna
+            // odpowiedź gdbus po otwarciu) — spróbuj ponownie za chwilę.
+            restoreRetryTimer.start()
             return
         }
+        // Panel z kopii to NASZ wpis — przywracamy bezwarunkowo,
+        // niezależnie od trybu, w którym aktualnie wisi.
         const js = 'var items=' + JSON.stringify(Array.from(backup)) + ';'
             + 'for (const it of items) {'
             + ' var parts = String(it).split(";");'
             + ' for (const p of panels()) {'
-            + '  if (String(p.screen)==parts[0] && p.location==parts[1]'
-            + '      && p.hiding=="none") {'
+            + '  if (String(p.screen)==parts[0] && p.location==parts[1]) {'
             + '   p.hiding = parts[2];'
             + '  }'
             + ' }'
             + '}'
         shellExec.connectSource(shellScriptCommand(js) + " #restore")
         Plasmoid.configuration.panelHidingBackup = []
+    }
+
+    // Jedno ponowienie przywracania, gdy kopia trybów była jeszcze w drodze.
+    Timer {
+        id: restoreRetryTimer
+        interval: 600
+        repeat: false
+        onTriggered: {
+            if (!fullscreenDialog.visible
+                    && Plasmoid.configuration.panelHidingBackup.length > 0) {
+                restorePanelHiding()
+            }
+        }
     }
 
     function setFullscreen(on) {
