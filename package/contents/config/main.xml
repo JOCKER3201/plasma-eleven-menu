@@ -38,5 +38,9 @@
             <label>Przesunięcie pionowe zwykłego menu w pikselach; 0 = odstęp od panelu równy odstępowi panelu od krawędzi ekranu.</label>
             <default>0</default>
         </entry>
+        <entry name="popupSizeIncrease" type="Int">
+            <label>Powiększenie zwykłego menu w procentach; 0 = rozmiar domyślny.</label>
+            <default>0</default>
+        </entry>
     </group>
 </kcfg>
