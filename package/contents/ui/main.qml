@@ -11,6 +11,7 @@ import QtQuick
 import QtQuick.Layouts
 import org.kde.plasma.plasmoid
 import org.kde.plasma.core as PlasmaCore
+import org.kde.plasma.plasma5support as P5Support
 import org.kde.plasma.private.kicker as Kicker
 import org.kde.kirigami as Kirigami
 
@@ -89,6 +90,79 @@ PlasmoidItem {
     function closeMenu() {
         popupDialog.closeMenu()
         fullscreenDialog.closeMenu()
+    }
+
+    // --- Zawieszanie ukrywania paneli na czas menu pełnoekranowego ---
+    // Status appletu trzyma widoczny tylko panel-gospodarza; pozostałe
+    // panele ekranu (autoukrywanie / unikanie okien) przełączamy przez
+    // interfejs skryptowy plasmashell na "none" i przywracamy przy
+    // zamknięciu. Kopia trybów trafia do konfiguracji appletu, więc po
+    // ewentualnej awarii stan naprawia się przy następnym starcie.
+
+    P5Support.DataSource {
+        id: shellExec
+        engine: "executable"
+        connectedSources: []
+        onNewData: (sourceName, data) => {
+            if (sourceName.indexOf("#suspend") !== -1) {
+                const out = data.stdout ?? ""
+                const a = out.indexOf("[")
+                const b = out.lastIndexOf("]")
+                if (a !== -1 && b > a) {
+                    try {
+                        const saved = JSON.parse(out.substring(a, b + 1))
+                        if (saved.length > 0) {
+                            Plasmoid.configuration.panelHidingBackup = saved
+                        }
+                    } catch (e) {}
+                }
+            }
+            disconnectSource(sourceName)
+        }
+    }
+
+    function shellScriptCommand(js) {
+        return 'gdbus call --session --dest org.kde.plasmashell'
+            + ' --object-path /PlasmaShell'
+            + ' --method org.kde.PlasmaShell.evaluateScript "'
+            + js.replace(/"/g, '\\"') + '"'
+    }
+
+    function suspendPanelHiding() {
+        if (Plasmoid.configuration.panelHidingBackup.length > 0) {
+            return
+        }
+        const sg = root.screenGeometry
+        const js = 'var sx=' + sg.x + '; var sy=' + sg.y + '; var saved=[];'
+            + 'for (const p of panels()) {'
+            + ' var g = screenGeometry(p.screen);'
+            + ' if (g.x==sx && g.y==sy'
+            + '     && (p.hiding=="autohide" || p.hiding=="dodgewindows")) {'
+            + '  saved.push(String(p.screen)+";"+p.location+";"+p.hiding);'
+            + '  p.hiding="none";'
+            + ' }'
+            + '}'
+            + 'print(JSON.stringify(saved));'
+        shellExec.connectSource(shellScriptCommand(js) + " #suspend")
+    }
+
+    function restorePanelHiding() {
+        const backup = Plasmoid.configuration.panelHidingBackup
+        if (!backup || backup.length === 0) {
+            return
+        }
+        const js = 'var items=' + JSON.stringify(Array.from(backup)) + ';'
+            + 'for (const it of items) {'
+            + ' var parts = String(it).split(";");'
+            + ' for (const p of panels()) {'
+            + '  if (String(p.screen)==parts[0] && p.location==parts[1]'
+            + '      && p.hiding=="none") {'
+            + '   p.hiding = parts[2];'
+            + '  }'
+            + ' }'
+            + '}'
+        shellExec.connectSource(shellScriptCommand(js) + " #restore")
+        Plasmoid.configuration.panelHidingBackup = []
     }
 
     function setFullscreen(on) {
@@ -192,5 +266,11 @@ PlasmoidItem {
         }
 
         rootModel.refresh()
+
+        // Samonaprawa: jeśli po awarii zostały zawieszone tryby ukrywania
+        // paneli, przywróć je przy starcie.
+        if (Plasmoid.configuration.panelHidingBackup.length > 0) {
+            restorePanelHiding()
+        }
     }
 }

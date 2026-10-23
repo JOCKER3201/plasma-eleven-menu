@@ -42,5 +42,9 @@
             <label>Powiększenie zwykłego menu w procentach; 0 = rozmiar domyślny.</label>
             <default>0</default>
         </entry>
+        <entry name="panelHidingBackup" type="StringList">
+            <label>Wewnętrzne: zapamiętane tryby ukrywania paneli zawieszone na czas menu pełnoekranowego (ekran;krawędź;tryb).</label>
+            <default></default>
+        </entry>
     </group>
 </kcfg>

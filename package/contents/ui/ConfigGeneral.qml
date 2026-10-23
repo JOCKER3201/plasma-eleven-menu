@@ -27,6 +27,7 @@ KCM.SimpleKCM {
     property int cfg_popupOffsetX
     property int cfg_popupOffsetY
     property int cfg_popupSizeIncrease
+    property var cfg_panelHidingBackup: []
 
     property string cfg_iconDefault
     property var cfg_favoritesDefault: []
@@ -37,6 +38,7 @@ KCM.SimpleKCM {
     property int cfg_popupOffsetXDefault
     property int cfg_popupOffsetYDefault
     property int cfg_popupSizeIncreaseDefault
+    property var cfg_panelHidingBackupDefault: []
 
     // Wszystkie dostępne akcje zasilania w ustalonej kolejności wyświetlania.
     readonly property var allPowerActions: [

@@ -42,6 +42,9 @@ PlasmaCore.Dialog {
         requestActivate()
         fsContent.reset()
         openAnimation.restart()
+        // Panele z autoukrywaniem/unikaniem okien na tym ekranie mają
+        // zostać widoczne przez cały czas otwarcia menu.
+        root.suspendPanelHiding()
     }
 
     function closeMenu() {
@@ -150,7 +153,10 @@ PlasmaCore.Dialog {
             }
 
             ScriptAction {
-                script: dlg.visible = false
+                script: {
+                    dlg.visible = false
+                    root.restorePanelHiding()
+                }
             }
         }
     }
