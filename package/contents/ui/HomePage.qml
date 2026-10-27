@@ -34,6 +34,10 @@ Flickable {
         PlasmaExtras.Heading {
             Layout.leftMargin: Kirigami.Units.gridUnit
             level: 4
+            // Heading ma własny binding rozmiaru (nie dziedziczy fontu
+            // z menu) — skala interfejsu nakładana jawnie; 1.10 to mnożnik
+            // poziomu 4 z PlasmaExtras.Heading.
+            font.pointSize: Kirigami.Theme.defaultFont.pointSize * 1.10 * root.fontScale
             text: i18n("Przypięte")
             visible: pinnedGrid.visible
         }
@@ -42,7 +46,7 @@ Flickable {
             id: pinnedGrid
 
             readonly property int columns: Math.max(2, Math.floor(
-                width / (Kirigami.Units.gridUnit * 4.5 * root.iconScale)))
+                width / (Kirigami.Units.gridUnit * 4.5 * root.uiScale)))
 
             Layout.fillWidth: true
             Layout.leftMargin: Kirigami.Units.gridUnit
@@ -52,7 +56,7 @@ Flickable {
             visible: Plasmoid.configuration.showPinned && count > 0
             interactive: false
             cellWidth: Math.floor(width / columns)
-            cellHeight: root.appIconSize + Math.round(Kirigami.Units.gridUnit * 2.5)
+            cellHeight: root.appIconSize + Math.round(Kirigami.Units.gridUnit * 2.5 * root.uiScale)
 
             model: rootModel.favoritesModel
 
@@ -80,6 +84,7 @@ Flickable {
         PlasmaExtras.Heading {
             Layout.leftMargin: Kirigami.Units.gridUnit
             level: 4
+            font.pointSize: Kirigami.Theme.defaultFont.pointSize * 1.10 * root.fontScale
             text: i18n("Wszystko")
         }
 
@@ -87,7 +92,7 @@ Flickable {
             id: categoriesGrid
 
             readonly property int columns: Math.max(2, Math.floor(
-                width / (Kirigami.Units.gridUnit * 9 * root.iconScale)))
+                width / (Kirigami.Units.gridUnit * 9 * root.uiScale)))
 
             Layout.fillWidth: true
             Layout.leftMargin: Kirigami.Units.gridUnit

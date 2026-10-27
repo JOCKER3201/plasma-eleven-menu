@@ -122,9 +122,11 @@ PlasmaCore.Dialog {
     mainItem: Item {
         id: popupRoot
 
-        // Rozmiar bazowy powiększany procentowo z ustawień (0% = domyślny).
+        // Rozmiar bazowy powiększany procentowo z ustawień (0% = domyślny)
+        // oraz skalą interfejsu — przy większych elementach i czcionkach
+        // rośnie całe okno menu, nie maleje pojemność widoków.
         readonly property real sizeFactor:
-            1 + Plasmoid.configuration.popupSizeIncrease / 100
+            (1 + Plasmoid.configuration.popupSizeIncrease / 100) * root.uiScale
 
         width: Math.round(Kirigami.Units.gridUnit * 30 * sizeFactor)
         height: Math.round(Kirigami.Units.gridUnit * 36 * sizeFactor)

@@ -51,170 +51,186 @@ FocusScope {
         }
     }
 
-    // Spodnia warstwa (NIE nakładka!): boczne przyciski myszy cofają widok,
-    // a prawy klik w puste tło jest połykany. Leży pod całą zawartością,
-    // bo MouseArea zawsze ustawia kursor strzałki (setCursor w konstruktorze)
-    // — warstwa na wierzchu wymuszałaby strzałkę nad całym menu i psuła
-    // kursor tekstowy nad polem wyszukiwania. Zdarzenia i tak tu docierają:
-    // żaden element wyżej nie akceptuje tych przycisków.
-    MouseArea {
+    // Wspólny mnożnik czcionek dla CAŁEGO menu: kontrolki QtQuick
+    // (Label, pola, przyciski, delegaty) dziedziczą font od najbliższego
+    // przodka typu Control, więc jeden przeskalowany pointSize tutaj
+    // powiększa teksty we wszystkich widokach. Elementy z własnym
+    // bindingiem rozmiaru (nagłówki, opisy wyników) skalują się jawnie.
+    QQC2.Control {
         anchors.fill: parent
-        acceptedButtons: Qt.BackButton | Qt.ForwardButton | Qt.RightButton
-        onPressed: mouse => {
-            if (mouse.button === Qt.BackButton || mouse.button === Qt.ForwardButton) {
-                fullRep.goBack()
-            }
-            mouse.accepted = true
-        }
-    }
+        font.pointSize: Kirigami.Theme.defaultFont.pointSize * root.fontScale
 
-    ColumnLayout {
-        anchors.fill: parent
-        spacing: Kirigami.Units.largeSpacing
-
-        RowLayout {
-            Layout.fillWidth: true
-            Layout.leftMargin: Kirigami.Units.gridUnit
-            Layout.rightMargin: Kirigami.Units.smallSpacing
-            Layout.topMargin: Kirigami.Units.smallSpacing
-            spacing: Kirigami.Units.smallSpacing
-
-            PlasmaExtras.SearchField {
-                id: searchField
-
-                Layout.fillWidth: true
-
-                placeholderText: i18n("Wyszukaj aplikacje, ustawienia i dokumenty")
-
-                // Kursor tekstowy nad całą pigułką pola, nie tylko nad samym
-                // wewnętrznym obszarem tekstu (paddingi i ikona lupy go gubią).
-                HoverHandler {
-                    cursorShape: Qt.IBeamCursor
+        // Spodnia warstwa (NIE nakładka!): boczne przyciski myszy cofają widok,
+        // a prawy klik w puste tło jest połykany. Leży pod całą zawartością,
+        // bo MouseArea zawsze ustawia kursor strzałki (setCursor w konstruktorze)
+        // — warstwa na wierzchu wymuszałaby strzałkę nad całym menu i psuła
+        // kursor tekstowy nad polem wyszukiwania. Zdarzenia i tak tu docierają:
+        // żaden element wyżej nie akceptuje tych przycisków.
+        MouseArea {
+            anchors.fill: parent
+            acceptedButtons: Qt.BackButton | Qt.ForwardButton | Qt.RightButton
+            onPressed: mouse => {
+                if (mouse.button === Qt.BackButton || mouse.button === Qt.ForwardButton) {
+                    fullRep.goBack()
                 }
-
-                onTextChanged: {
-                    runnerModel.query = text
-                    const current = stack.currentItem
-                    if (text.length > 0) {
-                        if (!current || current.objectName !== "searchPage") {
-                            stack.pop(null, QQC2.StackView.Immediate)
-                            stack.push(Qt.resolvedUrl("SearchPage.qml"), {},
-                                       QQC2.StackView.Immediate)
-                        }
-                    } else if (current && current.objectName === "searchPage") {
-                        stack.pop(null, QQC2.StackView.Immediate)
-                    }
-                }
-                onAccepted: {
-                    const current = stack.currentItem
-                    if (current && current.activateFirst) {
-                        current.activateFirst()
-                    }
-                }
-                Keys.onDownPressed: {
-                    const current = stack.currentItem
-                    if (current && current.focusFirst) {
-                        current.focusFirst()
-                    }
-                }
-            }
-
-            // Przełącznik trybu pełnoekranowego — prawy górny narożnik,
-            // ten sam w obu trybach (popup i okno pełnoekranowe).
-            PC3.ToolButton {
-                id: fullscreenButton
-
-                icon.name: root.fullscreenMode ? "view-restore" : "view-fullscreen"
-                display: QQC2.AbstractButton.IconOnly
-                text: root.fullscreenMode
-                    ? i18n("Wyłącz tryb pełnoekranowy")
-                    : i18n("Tryb pełnoekranowy")
-
-                QQC2.ToolTip.text: text
-                QQC2.ToolTip.visible: hovered
-                QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
-
-                onClicked: root.setFullscreen(!root.fullscreenMode)
+                mouse.accepted = true
             }
         }
 
-        // Cała powierzchnia menu pod polem wyszukiwania: strona główna,
-        // a po kliknięciu kategorii — folder wypełniający ten obszar.
-        QQC2.StackView {
-            id: stack
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            initialItem: HomePage {}
-            clip: true
-        }
-
-        Kirigami.Separator {
-            Layout.fillWidth: true
-        }
-
-        RowLayout {
-            Layout.fillWidth: true
-            Layout.leftMargin: Kirigami.Units.gridUnit
-            Layout.rightMargin: Kirigami.Units.gridUnit
-            Layout.bottomMargin: Kirigami.Units.smallSpacing
+        ColumnLayout {
+            anchors.fill: parent
             spacing: Kirigami.Units.largeSpacing
 
-            KCoreAddons.KUser {
-                id: kuser
-            }
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.leftMargin: Kirigami.Units.gridUnit
+                Layout.rightMargin: Kirigami.Units.smallSpacing
+                Layout.topMargin: Kirigami.Units.smallSpacing
+                spacing: Kirigami.Units.smallSpacing
 
-            // Użytkownik jako przycisk: otwiera Ustawienia systemowe
-            // na module Użytkownicy (jak w Kickoffie).
-            PC3.ToolButton {
-                id: userButton
+                PlasmaExtras.SearchField {
+                    id: searchField
 
-                readonly property string displayName:
-                    kuser.fullName.length > 0 ? kuser.fullName : kuser.loginName
+                    Layout.fillWidth: true
 
-                text: i18n("Otwórz ustawienia użytkowników")
+                    placeholderText: i18n("Wyszukaj aplikacje, ustawienia i dokumenty")
 
-                QQC2.ToolTip.text: text
-                QQC2.ToolTip.visible: hovered
-                QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
-
-                contentItem: RowLayout {
-                    spacing: Kirigami.Units.smallSpacing
-
-                    KirigamiComponents.Avatar {
-                        Layout.preferredWidth: Kirigami.Units.iconSizes.medium
-                        Layout.preferredHeight: Kirigami.Units.iconSizes.medium
-                        name: userButton.displayName
-                        source: kuser.faceIconUrl
+                    // Kursor tekstowy nad całą pigułką pola, nie tylko nad samym
+                    // wewnętrznym obszarem tekstu (paddingi i ikona lupy go gubią).
+                    HoverHandler {
+                        cursorShape: Qt.IBeamCursor
                     }
 
-                    QQC2.Label {
-                        text: userButton.displayName
-                        elide: Text.ElideRight
+                    onTextChanged: {
+                        runnerModel.query = text
+                        const current = stack.currentItem
+                        if (text.length > 0) {
+                            if (!current || current.objectName !== "searchPage") {
+                                stack.pop(null, QQC2.StackView.Immediate)
+                                stack.push(Qt.resolvedUrl("SearchPage.qml"), {},
+                                           QQC2.StackView.Immediate)
+                            }
+                        } else if (current && current.objectName === "searchPage") {
+                            stack.pop(null, QQC2.StackView.Immediate)
+                        }
+                    }
+                    onAccepted: {
+                        const current = stack.currentItem
+                        if (current && current.activateFirst) {
+                            current.activateFirst()
+                        }
+                    }
+                    Keys.onDownPressed: {
+                        const current = stack.currentItem
+                        if (current && current.focusFirst) {
+                            current.focusFirst()
+                        }
                     }
                 }
 
-                onClicked: {
-                    KCM.KCMLauncher.openSystemSettings("kcm_users")
-                    root.closeMenu()
+                // Przełącznik trybu pełnoekranowego — prawy górny narożnik,
+                // ten sam w obu trybach (popup i okno pełnoekranowe).
+                PC3.ToolButton {
+                    id: fullscreenButton
+
+                    icon.name: root.fullscreenMode ? "view-restore" : "view-fullscreen"
+                    icon.width: Math.round(Kirigami.Units.iconSizes.smallMedium * root.uiScale)
+                    icon.height: icon.width
+                    display: QQC2.AbstractButton.IconOnly
+                    text: root.fullscreenMode
+                        ? i18n("Wyłącz tryb pełnoekranowy")
+                        : i18n("Tryb pełnoekranowy")
+
+                    QQC2.ToolTip.text: text
+                    QQC2.ToolTip.visible: hovered
+                    QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
+
+                    onClicked: root.setFullscreen(!root.fullscreenMode)
                 }
             }
 
-            Item {
+            // Cała powierzchnia menu pod polem wyszukiwania: strona główna,
+            // a po kliknięciu kategorii — folder wypełniający ten obszar.
+            QQC2.StackView {
+                id: stack
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                initialItem: HomePage {}
+                clip: true
+            }
+
+            Kirigami.Separator {
                 Layout.fillWidth: true
             }
 
-            PC3.ToolButton {
-                id: powerButton
+            RowLayout {
+                Layout.fillWidth: true
+                Layout.leftMargin: Kirigami.Units.gridUnit
+                Layout.rightMargin: Kirigami.Units.gridUnit
+                Layout.bottomMargin: Kirigami.Units.smallSpacing
+                spacing: Kirigami.Units.largeSpacing
 
-                icon.name: "system-shutdown"
-                display: QQC2.AbstractButton.IconOnly
-                text: i18n("Zasilanie")
+                KCoreAddons.KUser {
+                    id: kuser
+                }
 
-                QQC2.ToolTip.text: text
-                QQC2.ToolTip.visible: hovered
-                QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
+                // Użytkownik jako przycisk: otwiera Ustawienia systemowe
+                // na module Użytkownicy (jak w Kickoffie).
+                PC3.ToolButton {
+                    id: userButton
 
-                onClicked: powerMenu.openRelative()
+                    readonly property string displayName:
+                        kuser.fullName.length > 0 ? kuser.fullName : kuser.loginName
+
+                    text: i18n("Otwórz ustawienia użytkowników")
+
+                    QQC2.ToolTip.text: text
+                    QQC2.ToolTip.visible: hovered
+                    QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
+
+                    contentItem: RowLayout {
+                        spacing: Kirigami.Units.smallSpacing
+
+                        KirigamiComponents.Avatar {
+                            Layout.preferredWidth:
+                                Math.round(Kirigami.Units.iconSizes.medium * root.uiScale)
+                            Layout.preferredHeight:
+                                Math.round(Kirigami.Units.iconSizes.medium * root.uiScale)
+                            name: userButton.displayName
+                            source: kuser.faceIconUrl
+                        }
+
+                        QQC2.Label {
+                            text: userButton.displayName
+                            elide: Text.ElideRight
+                        }
+                    }
+
+                    onClicked: {
+                        KCM.KCMLauncher.openSystemSettings("kcm_users")
+                        root.closeMenu()
+                    }
+                }
+
+                Item {
+                    Layout.fillWidth: true
+                }
+
+                PC3.ToolButton {
+                    id: powerButton
+
+                    icon.name: "system-shutdown"
+                    icon.width: Math.round(Kirigami.Units.iconSizes.smallMedium * root.uiScale)
+                    icon.height: icon.width
+                    display: QQC2.AbstractButton.IconOnly
+                    text: i18n("Zasilanie")
+
+                    QQC2.ToolTip.text: text
+                    QQC2.ToolTip.visible: hovered
+                    QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
+
+                    onClicked: powerMenu.openRelative()
+                }
             }
         }
     }

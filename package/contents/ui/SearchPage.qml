@@ -93,8 +93,10 @@ Item {
                 spacing: Kirigami.Units.smallSpacing
 
                 Kirigami.Icon {
-                    Layout.preferredWidth: Kirigami.Units.iconSizes.medium
-                    Layout.preferredHeight: Kirigami.Units.iconSizes.medium
+                    Layout.preferredWidth:
+                        Math.round(Kirigami.Units.iconSizes.medium * root.uiScale)
+                    Layout.preferredHeight:
+                        Math.round(Kirigami.Units.iconSizes.medium * root.uiScale)
                     source: model.decoration
                 }
 
@@ -113,7 +115,10 @@ Item {
                         text: model.description ?? ""
                         visible: text.length > 0
                         elide: Text.ElideRight
-                        font: Kirigami.Theme.smallFont
+                        // Mniejszy font opisu skalowany razem z interfejsem
+                        // (jawnie — przypisanie całego fontu wyłącza
+                        // dziedziczenie pointSize z menu).
+                        font.pointSize: Kirigami.Theme.smallFont.pointSize * root.fontScale
                     }
                 }
             }
