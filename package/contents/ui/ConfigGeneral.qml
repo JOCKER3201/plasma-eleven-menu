@@ -9,6 +9,7 @@ import QtQuick.Controls as QQC2
 import org.kde.kcmutils as KCM
 import org.kde.kirigami as Kirigami
 import org.kde.iconthemes as KIconThemes
+import org.kde.plasma.plasma5support as P5Support
 
 KCM.SimpleKCM {
     id: configGeneral
@@ -49,8 +50,27 @@ KCM.SimpleKCM {
         { id: "hibernate",   label: i18n("Hibernuj") },
         { id: "shutdown",    label: i18n("Zamknij") },
         { id: "reboot",      label: i18n("Uruchom ponownie") },
-        { id: "logout",      label: i18n("Wyloguj") }
+        { id: "logout",      label: i18n("Wyloguj") },
+        { id: "gamemode",    label: i18n("Tryb Game Mode") }
     ]
+
+    // Tryb Game Mode wymaga /usr/bin/return-to-gamemode — sprawdzane przy
+    // otwarciu ustawień; bez niego opcja jest wyszarzona.
+    property bool gameModeAvailable: false
+
+    P5Support.DataSource {
+        id: gameModeCheck
+        engine: "executable"
+        connectedSources: []
+        onNewData: (sourceName, data) => {
+            configGeneral.gameModeAvailable =
+                (data.stdout ?? "").indexOf("GMYES") !== -1
+            disconnectSource(sourceName)
+        }
+    }
+
+    Component.onCompleted: gameModeCheck.connectSource(
+        "test -x /usr/bin/return-to-gamemode && echo GMYES")
 
     function togglePowerAction(id, enabled) {
         const set = new Set(cfg_powerActions)
@@ -262,6 +282,8 @@ KCM.SimpleKCM {
 
                     text: modelData.label
                     checked: configGeneral.cfg_powerActions.indexOf(modelData.id) !== -1
+                    enabled: modelData.id !== "gamemode"
+                        || configGeneral.gameModeAvailable
                     onToggled: configGeneral.togglePowerAction(modelData.id, checked)
                 }
             }

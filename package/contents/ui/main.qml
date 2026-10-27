@@ -106,23 +106,37 @@ PlasmoidItem {
     // oknami, bez rezerwowania miejsca) i przywracamy przy zamknięciu. Kopia trybów trafia do konfiguracji appletu, więc po
     // ewentualnej awarii stan naprawia się przy następnym starcie.
 
+    // Tryb Game Mode (Bazzite): dostępny tylko, gdy przy starcie appletu
+    // istnieje wykonywalny /usr/bin/return-to-gamemode.
+    property bool gameModeAvailable: false
+
+    function runGameMode() {
+        closeMenu()
+        shellExec.connectSource("/usr/bin/return-to-gamemode")
+    }
+
+    // Maszyna stanu zawieszania paneli: idle -> reading -> applying ->
+    // active -> (restore) -> idle. NIEZMIENNIK: żaden panel nie trafia
+    // w windowsgobelow, zanim jego oryginalny tryb nie siedzi w configu,
+    // a kopia znika dopiero po POTWIERDZONYM przywróceniu.
+    property string panelSuspendState: "idle"
+    property int panelOpSeq: 0
+
     P5Support.DataSource {
         id: shellExec
         engine: "executable"
         connectedSources: []
         onNewData: (sourceName, data) => {
-            if (sourceName.indexOf("#suspend") !== -1) {
-                const out = data.stdout ?? ""
-                const a = out.indexOf("[")
-                const b = out.lastIndexOf("]")
-                if (a !== -1 && b > a) {
-                    try {
-                        const saved = JSON.parse(out.substring(a, b + 1))
-                        if (saved.length > 0) {
-                            Plasmoid.configuration.panelHidingBackup = saved
-                        }
-                    } catch (e) {}
-                }
+            const ok = (data["exit code"] ?? -1) === 0
+            if (sourceName.indexOf("#gamemodecheck") !== -1) {
+                root.gameModeAvailable =
+                    ok && (data.stdout ?? "").indexOf("GMYES") !== -1
+            } else if (sourceName.indexOf("#suspendread") !== -1) {
+                root.onSuspendRead(ok, data.stdout ?? "")
+            } else if (sourceName.indexOf("#apply") !== -1) {
+                root.onApplyDone(ok)
+            } else if (sourceName.indexOf("#restore") !== -1) {
+                root.onRestoreDone(ok, data.stdout ?? "")
             }
             disconnectSource(sourceName)
         }
@@ -135,10 +149,16 @@ PlasmoidItem {
             + js.replace(/"/g, '\\"') + '"'
     }
 
+    // FAZA 1: wyłącznie ODCZYT trybów paneli tego ekranu — bez mutacji.
     function suspendPanelHiding() {
-        if (Plasmoid.configuration.panelHidingBackup.length > 0) {
+        if (panelSuspendState !== "idle") {
             return
         }
+        if (Plasmoid.configuration.panelHidingBackup.length > 0) {
+            // Zaległa kopia z poprzedniego cyklu — zajmie się nią restore.
+            return
+        }
+        panelSuspendState = "reading"
         const sg = root.screenGeometry
         const js = 'var sx=' + sg.x + '; var sy=' + sg.y + '; var saved=[];'
             + 'for (const p of panels()) {'
@@ -146,44 +166,158 @@ PlasmoidItem {
             + ' if (g.x==sx && g.y==sy'
             + '     && (p.hiding=="autohide" || p.hiding=="dodgewindows")) {'
             + '  saved.push(String(p.screen)+";"+p.location+";"+p.hiding);'
-            + '  p.hiding="windowsgobelow";'
             + ' }'
             + '}'
             + 'print(JSON.stringify(saved));'
-        shellExec.connectSource(shellScriptCommand(js) + " #suspend")
+        shellExec.connectSource(shellScriptCommand(js)
+            + " #suspendread:" + (++panelOpSeq))
     }
 
-    function restorePanelHiding() {
-        const backup = Plasmoid.configuration.panelHidingBackup
-        if (!backup || backup.length === 0) {
-            // Kopia mogła jeszcze nie dojechać (zapisuje ją asynchroniczna
-            // odpowiedź gdbus po otwarciu) — spróbuj ponownie za chwilę.
-            restoreRetryTimer.start()
+    // Kopia trafia do configu PRZED jakąkolwiek mutacją; przełączenie
+    // paneli dopiero po zapisie i tylko gdy menu wciąż jest otwarte.
+    function onSuspendRead(ok, stdout) {
+        if (panelSuspendState !== "reading") {
             return
         }
-        // Panel z kopii to NASZ wpis — przywracamy bezwarunkowo,
-        // niezależnie od trybu, w którym aktualnie wisi.
-        const js = 'var items=' + JSON.stringify(Array.from(backup)) + ';'
+        let saved = []
+        if (ok) {
+            const a = stdout.indexOf("[")
+            const b = stdout.lastIndexOf("]")
+            if (a !== -1 && b > a) {
+                try {
+                    saved = JSON.parse(stdout.substring(a, b + 1))
+                } catch (e) {}
+            }
+        }
+        if (!ok || saved.length === 0) {
+            panelSuspendState = "idle"
+            return
+        }
+        Plasmoid.configuration.panelHidingBackup = saved
+        if (!fullscreenDialog.visible) {
+            // Menu zamknięte zanim odpowiedź dojechała — nic nie mutujemy.
+            Plasmoid.configuration.panelHidingBackup = []
+            panelSuspendState = "idle"
+            return
+        }
+        // FAZA 2: dopiero teraz przełączamy panele na windowsgobelow.
+        panelSuspendState = "applying"
+        const js = 'var items=' + JSON.stringify(Array.from(saved)) + ';'
             + 'for (const it of items) {'
             + ' var parts = String(it).split(";");'
             + ' for (const p of panels()) {'
             + '  if (String(p.screen)==parts[0] && p.location==parts[1]) {'
-            + '   p.hiding = parts[2];'
+            + '   p.hiding = "windowsgobelow";'
             + '  }'
             + ' }'
             + '}'
-        shellExec.connectSource(shellScriptCommand(js) + " #restore")
-        Plasmoid.configuration.panelHidingBackup = []
+        shellExec.connectSource(shellScriptCommand(js)
+            + " #apply:" + (++panelOpSeq))
     }
 
-    // Jedno ponowienie przywracania, gdy kopia trybów była jeszcze w drodze.
+    function onApplyDone(ok) {
+        if (panelSuspendState !== "applying") {
+            return
+        }
+        panelSuspendState = "active"
+        if (!fullscreenDialog.visible) {
+            // Menu zamknięte w trakcie przełączania — przywróć od razu.
+            restorePanelHiding()
+        }
+    }
+
+    // Przywracanie z weryfikacją: kopia znika DOPIERO, gdy skrypt
+    // potwierdzi, że każdy wpis znalazł swój panel (licznik dopasowań —
+    // chroni przed "pustym sukcesem" przy starcie, gdy panele jeszcze
+    // nie istnieją) i żaden panel ekranu nie wisi już na windowsgobelow.
+    function restorePanelHiding() {
+        if (panelSuspendState === "reading" || panelSuspendState === "applying") {
+            restoreRetryTimer.restart()
+            return
+        }
+        const backup = Plasmoid.configuration.panelHidingBackup
+        if (!backup || backup.length === 0) {
+            panelSuspendState = "idle"
+            restoreRetryTimer.stop()
+            restoreRetryTimer.attempts = 0
+            return
+        }
+        const sg = root.screenGeometry
+        const js = 'var sx=' + sg.x + '; var sy=' + sg.y + ';'
+            + 'var items=' + JSON.stringify(Array.from(backup)) + ';'
+            + 'var matched=0;'
+            + 'for (const it of items) {'
+            + ' var parts = String(it).split(";");'
+            + ' for (const p of panels()) {'
+            + '  if (String(p.screen)==parts[0] && p.location==parts[1]) {'
+            + '   p.hiding = parts[2]; matched++;'
+            + '  }'
+            + ' }'
+            + '}'
+            + 'var stuck=0;'
+            + 'for (const p of panels()) {'
+            + ' var g = screenGeometry(p.screen);'
+            + ' if (g.x==sx && g.y==sy && p.hiding=="windowsgobelow") stuck++;'
+            + '}'
+            + 'print(JSON.stringify([matched, stuck, items.length]));'
+        shellExec.connectSource(shellScriptCommand(js)
+            + " #restore:" + (++panelOpSeq))
+        restoreRetryTimer.restart()
+    }
+
+    function onRestoreDone(ok, stdout) {
+        let confirmed = false
+        if (ok) {
+            const a = stdout.indexOf("[")
+            const b = stdout.lastIndexOf("]")
+            if (a !== -1 && b > a) {
+                try {
+                    const r = JSON.parse(stdout.substring(a, b + 1))
+                    confirmed = r.length === 3 && r[1] === 0 && r[0] >= r[2]
+                } catch (e) {}
+            }
+        }
+        if (confirmed) {
+            Plasmoid.configuration.panelHidingBackup = []
+            panelSuspendState = "idle"
+            restoreRetryTimer.stop()
+            restoreRetryTimer.attempts = 0
+        }
+        // W przeciwnym razie kopia zostaje — powtarzalny retry ponowi.
+    }
+
+    // Powtarzalne ponawianie przywracania (z limitem i watchdogiem na
+    // zgubioną odpowiedź read/apply).
     Timer {
         id: restoreRetryTimer
-        interval: 600
-        repeat: false
+        interval: 500
+        repeat: true
+        property int attempts: 0
         onTriggered: {
-            if (!fullscreenDialog.visible
-                    && Plasmoid.configuration.panelHidingBackup.length > 0) {
+            if (fullscreenDialog.visible) {
+                stop()
+                attempts = 0
+                return
+            }
+            if (Plasmoid.configuration.panelHidingBackup.length === 0
+                    && panelSuspendState === "idle") {
+                stop()
+                attempts = 0
+                return
+            }
+            attempts++
+            if (attempts > 30) {
+                stop()
+                attempts = 0
+                return
+            }
+            if ((panelSuspendState === "reading"
+                    || panelSuspendState === "applying") && attempts >= 6) {
+                // Odpowiedź read/apply uznana za zgubioną.
+                panelSuspendState = "active"
+            }
+            if (panelSuspendState !== "reading"
+                    && panelSuspendState !== "applying") {
                 restorePanelHiding()
             }
         }
@@ -257,16 +391,21 @@ PlasmoidItem {
 
         // systemFavoritesModel jest gotowy dopiero po refresh(), dlatego
         // listę akcji zasilania ustawiamy na sygnał refreshed (idempotentnie).
-        onRefreshed: {
-            systemFavoritesModel.favorites = Plasmoid.configuration.powerActions
-        }
+        onRefreshed: root.applyPowerActions()
+    }
+
+    // "gamemode" to nasza własna pozycja (PowerMenu), nie akcja kickera —
+    // do modelu systemowego trafiają tylko pozostałe.
+    function applyPowerActions() {
+        rootModel.systemFavoritesModel.favorites =
+            Array.from(Plasmoid.configuration.powerActions)
+                .filter(a => a !== "gamemode")
     }
 
     Connections {
         target: Plasmoid.configuration
         function onPowerActionsChanged() {
-            rootModel.systemFavoritesModel.favorites =
-                Plasmoid.configuration.powerActions
+            root.applyPowerActions()
         }
     }
 
@@ -290,6 +429,10 @@ PlasmoidItem {
         }
 
         rootModel.refresh()
+
+        // Wykrycie trybu Game Mode (raz, przy uruchomieniu menu).
+        shellExec.connectSource(
+            "test -x /usr/bin/return-to-gamemode && echo GMYES #gamemodecheck")
 
         // Samonaprawa: jeśli po awarii zostały zawieszone tryby ukrywania
         // paneli, przywróć je przy starcie.

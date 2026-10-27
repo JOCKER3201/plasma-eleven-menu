@@ -219,12 +219,10 @@ FocusScope {
         }
     }
 
-    // Menu zasilania zasilane wprost modelem akcji systemowych kickera
+    // Menu zasilania: akcje systemowe kickera + opcjonalny Tryb Game Mode
     // (zestaw akcji konfigurowalny w ustawieniach plasmoidu).
-    PlasmaExtras.ModelContextMenu {
+    PowerMenu {
         id: powerMenu
         visualParent: powerButton
-        model: rootModel.systemFavoritesModel
-        onClicked: m => rootModel.systemFavoritesModel.trigger(m.index, "", null)
     }
 }
