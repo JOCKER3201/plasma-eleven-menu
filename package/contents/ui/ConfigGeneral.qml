@@ -133,7 +133,7 @@ KCM.SimpleKCM {
         }
 
         RowLayout {
-            Kirigami.FormData.label: i18n("Wielkość ikon:")
+            Kirigami.FormData.label: i18n("Wielkość interfejsu:")
             spacing: Kirigami.Units.smallSpacing
 
             QQC2.Slider {
@@ -148,14 +148,14 @@ KCM.SimpleKCM {
             QQC2.Label {
                 Layout.preferredWidth: Kirigami.Units.gridUnit * 3.5
                 horizontalAlignment: Text.AlignRight
-                text: i18n("%1 px", configGeneral.cfg_iconSize)
+                text: i18n("%1%", Math.round(configGeneral.cfg_iconSize / 32 * 100))
             }
 
             QQC2.ToolButton {
                 icon.name: "edit-undo"
                 enabled: configGeneral.cfg_iconSize !== 32
 
-                QQC2.ToolTip.text: i18n("Przywróć domyślną wielkość (32 px)")
+                QQC2.ToolTip.text: i18n("Przywróć domyślną wielkość (100%)")
                 QQC2.ToolTip.visible: hovered
                 QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
 

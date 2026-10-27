@@ -23,7 +23,7 @@
             <default>true</default>
         </entry>
         <entry name="iconSize" type="Int">
-            <label>Wielkość ikon aplikacji w pikselach; skaluje też kafelki kategorii.</label>
+            <label>Wielkość interfejsu menu: bazowy rozmiar ikon w pikselach (32 = 100%); skaluje ikony, czcionki, kafelki i okno popupu.</label>
             <default>32</default>
         </entry>
         <entry name="powerActions" type="StringList">

@@ -32,6 +32,8 @@ Item {
 
             PC3.ToolButton {
                 icon.name: "go-previous"
+                icon.width: Math.round(Kirigami.Units.iconSizes.smallMedium * root.uiScale)
+                icon.height: icon.width
                 display: QQC2.AbstractButton.IconOnly
                 text: i18n("Wstecz")
 
@@ -43,14 +45,19 @@ Item {
             }
 
             Kirigami.Icon {
-                Layout.preferredWidth: Kirigami.Units.iconSizes.smallMedium
-                Layout.preferredHeight: Kirigami.Units.iconSizes.smallMedium
+                Layout.preferredWidth:
+                    Math.round(Kirigami.Units.iconSizes.smallMedium * root.uiScale)
+                Layout.preferredHeight:
+                    Math.round(Kirigami.Units.iconSizes.smallMedium * root.uiScale)
                 source: page.categoryIcon
             }
 
             PlasmaExtras.Heading {
                 Layout.fillWidth: true
                 level: 3
+                // Jawna skala interfejsu; 1.15 to mnożnik poziomu 3
+                // z PlasmaExtras.Heading (własny binding, nie dziedziczy).
+                font.pointSize: Kirigami.Theme.defaultFont.pointSize * 1.15 * root.fontScale
                 text: page.title
                 elide: Text.ElideRight
             }
@@ -60,7 +67,7 @@ Item {
             id: appsGrid
 
             readonly property int columns: Math.max(2, Math.floor(
-                width / (Kirigami.Units.gridUnit * 5 * root.iconScale)))
+                width / (Kirigami.Units.gridUnit * 5 * root.uiScale)))
 
             Layout.fillWidth: true
             Layout.fillHeight: true
@@ -69,7 +76,7 @@ Item {
 
             clip: true
             cellWidth: Math.floor(width / columns)
-            cellHeight: root.appIconSize + Math.round(Kirigami.Units.gridUnit * 2.5)
+            cellHeight: root.appIconSize + Math.round(Kirigami.Units.gridUnit * 2.5 * root.uiScale)
 
             model: page.categoryModel
 

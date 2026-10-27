@@ -29,12 +29,16 @@ PlasmoidItem {
     readonly property bool fullscreenMode:
         Plasmoid.configuration.fullscreen === true
 
-    // Wielkość ikon aplikacji z ustawień; iconScale skaluje za nią
-    // komórki siatek i kafelki kategorii (foldery ikon).
+    // Wielkość interfejsu z ustawień (bazą jest rozmiar ikony; 32 px =
+    // 100%): uiScale skaluje ikony, czcionki, komórki siatek, kafelki
+    // kategorii i elementy stopki w całym menu.
     readonly property int appIconSize:
         Math.max(16, Math.min(128, Plasmoid.configuration.iconSize))
-    readonly property real iconScale:
+    readonly property real uiScale:
         appIconSize / Kirigami.Units.iconSizes.medium
+    // Czcionki skalują się ŁAGODNIEJ niż reszta interfejsu (w połowie
+    // drogi do pełnej skali): przy interfejsie 200% teksty mają 150%.
+    readonly property real fontScale: 1 + (uiScale - 1) / 2
 
     // Wzorzec jak w Application Dashboard (kickerdash, zweryfikowany
     // w źródłach Plasmy 6.7.5): IKONA w panelu jest fullRepresentation
