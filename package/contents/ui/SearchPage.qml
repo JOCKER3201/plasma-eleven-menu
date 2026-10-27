@@ -25,6 +25,7 @@ Item {
 
     // Wywoływane strzałką w dół z pola wyszukiwania.
     function focusFirst() {
+        root.keyboardNav = true
         if (resultsList.count > 0) {
             resultsList.currentIndex = 0
             resultsList.forceActiveFocus()
@@ -51,9 +52,26 @@ Item {
         delegate: PC3.ItemDelegate {
             id: resultDelegate
 
+            // Attached property czytane we własnym elemencie (przez obcy
+            // obiekt nie działa) — do podświetlenia w tle.
+            readonly property bool isCurrent: ListView.isCurrentItem
+
             width: resultsList.width
             text: model.display
-            highlighted: ListView.isCurrentItem
+
+            // Jedno podświetlenie naraz, IDENTYCZNE dla myszy
+            // i klawiatury (ten sam kolor co na kafelkach): w trybie
+            // nawigacji strzałkami świeci wybrany wiersz, hover gaśnie.
+            background: Rectangle {
+                radius: Kirigami.Units.cornerRadius
+                color: resultDelegate.pressed
+                    ? Qt.alpha(Kirigami.Theme.textColor, 0.15)
+                    : (resultDelegate.isCurrent && root.keyboardNav
+                           && resultsList.activeFocus)
+                          || (resultDelegate.hovered && !root.keyboardNav)
+                        ? Qt.alpha(Kirigami.Theme.textColor, 0.08)
+                        : "transparent"
+            }
 
             onClicked: {
                 resultsList.model.trigger(index, "", null)
@@ -125,6 +143,9 @@ Item {
         }
 
         Keys.onPressed: event => {
+            if (event.key === Qt.Key_Up || event.key === Qt.Key_Down) {
+                root.keyboardNav = true
+            }
             if (event.key === Qt.Key_Up && resultsList.currentIndex === 0) {
                 resultsList.currentIndex = -1
                 searchField.forceActiveFocus()

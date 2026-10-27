@@ -28,6 +28,7 @@ FocusScope {
         searchField.text = ""
         stack.pop(null, QQC2.StackView.Immediate)
         searchField.forceActiveFocus()
+        root.keyboardNav = false
     }
 
     // Cofnięcie o jeden widok (wyszukiwanie → folder → strona główna).
@@ -59,6 +60,34 @@ FocusScope {
     QQC2.Control {
         anchors.fill: parent
         font.pointSize: Kirigami.Theme.defaultFont.pointSize * root.fontScale
+
+        // Ruch myszy nad menu kończy tryb nawigacji klawiaturą
+        // (hover wraca, podświetlenie strzałkowe gaśnie). Handlery hover
+        // są kooperatywne — nie zabierają zdarzeń polu wyszukiwania
+        // ani kafelkom.
+        // UWAGA: Qt po każdej zmianie sceny pod kursorem dostarcza
+        // SYNTETYCZNE zdarzenie hover z niezmienioną pozycją myszy (samo
+        // przełączenie podświetlenia strzałkami by je wywołało i tryb
+        // gasł po jednej klatce) — dlatego tryb wyłącza dopiero
+        // RZECZYWISTA zmiana pozycji kursora.
+        HoverHandler {
+            id: pointerWatch
+
+            property real lastX: -1
+            property real lastY: -1
+
+            onPointChanged: {
+                if (!hovered) {
+                    return
+                }
+                const p = point.scenePosition
+                if (p.x !== pointerWatch.lastX || p.y !== pointerWatch.lastY) {
+                    pointerWatch.lastX = p.x
+                    pointerWatch.lastY = p.y
+                    root.keyboardNav = false
+                }
+            }
+        }
 
         // Spodnia warstwa (NIE nakładka!): boczne przyciski myszy cofają widok,
         // a prawy klik w puste tło jest połykany. Leży pod całą zawartością,

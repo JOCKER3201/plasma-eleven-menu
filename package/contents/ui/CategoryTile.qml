@@ -15,6 +15,10 @@ QQC2.AbstractButton {
     // Model aplikacji tej kategorii (do podglądu mini-ikon).
     property var categoryModel
 
+    // Kafelek wskazany strzałkami (tryb nawigacji klawiaturą) —
+    // podświetlany jak hover.
+    property bool keyboardSelected: false
+
     signal opened()
 
     hoverEnabled: true
@@ -35,7 +39,7 @@ QQC2.AbstractButton {
             radius: Kirigami.Units.cornerRadius
             color: tile.pressed
                 ? Qt.alpha(Kirigami.Theme.textColor, 0.15)
-                : tile.hovered
+                : tile.keyboardSelected || (tile.hovered && !root.keyboardNav)
                     ? Qt.alpha(Kirigami.Theme.textColor, 0.10)
                     : Qt.alpha(Kirigami.Theme.textColor, 0.05)
             border.width: tile.visualFocus ? 1 : 0

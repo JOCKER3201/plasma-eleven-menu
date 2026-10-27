@@ -20,6 +20,16 @@ Item {
 
     readonly property var stackView: QQC2.StackView.view
 
+    // Wejście z pola wyszukiwania strzałką w dół (oraz od razu po
+    // otwarciu folderu klawiaturą).
+    function focusFirst() {
+        root.keyboardNav = true
+        if (appsGrid.count > 0) {
+            appsGrid.currentIndex = 0
+            appsGrid.forceActiveFocus()
+        }
+    }
+
     ColumnLayout {
         anchors.fill: parent
         spacing: Kirigami.Units.largeSpacing
@@ -75,12 +85,42 @@ Item {
             Layout.rightMargin: Kirigami.Units.gridUnit
 
             clip: true
+            // Ta siatka przewija się sama, więc wbudowana nawigacja
+            // strzałkami sama doprowadza wybrany kafelek do widoku.
+            keyNavigationEnabled: true
             cellWidth: Math.floor(width / columns)
             cellHeight: root.appIconSize + Math.round(Kirigami.Units.gridUnit * 2.5 * root.uiScale)
 
             model: page.categoryModel
 
             PC3.ScrollBar.vertical: PC3.ScrollBar {}
+
+            onActiveFocusChanged: {
+                if (activeFocus && currentIndex < 0) {
+                    currentIndex = 0
+                }
+            }
+
+            Keys.onPressed: event => {
+                if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter
+                        || event.key === Qt.Key_Space) {
+                    root.keyboardNav = true
+                    if (currentItem) {
+                        currentItem.clicked()
+                    }
+                    event.accepted = true
+                    return
+                }
+                if (event.key === Qt.Key_Up || event.key === Qt.Key_Down
+                        || event.key === Qt.Key_Left || event.key === Qt.Key_Right) {
+                    root.keyboardNav = true
+                    if (event.key === Qt.Key_Up
+                            && Math.floor(currentIndex / columns) === 0) {
+                        searchField.forceActiveFocus()
+                        event.accepted = true
+                    }
+                }
+            }
 
             delegate: AppTile {
                 width: appsGrid.cellWidth
@@ -89,14 +129,20 @@ Item {
                 iconSource: model.decoration
                 iconSize: root.appIconSize
                 favoriteId: model.favoriteId ?? ""
+                keyboardSelected: GridView.isCurrentItem
+                    && appsGrid.activeFocus && root.keyboardNav
                 onTriggered: {
                     if (model.hasChildren) {
                         // Podkategoria: otwórz kolejny folder na całej powierzchni.
-                        page.stackView.push(Qt.resolvedUrl("CategoryPage.qml"), {
-                            categoryModel: page.categoryModel.modelForRow(index),
-                            title: model.display,
-                            categoryIcon: model.decoration
-                        })
+                        const sub = page.stackView.push(
+                            Qt.resolvedUrl("CategoryPage.qml"), {
+                                categoryModel: page.categoryModel.modelForRow(index),
+                                title: model.display,
+                                categoryIcon: model.decoration
+                            })
+                        if (root.keyboardNav && sub && sub.focusFirst) {
+                            sub.focusFirst()
+                        }
                     } else {
                         page.categoryModel.trigger(index, "", null)
                         root.closeMenu()

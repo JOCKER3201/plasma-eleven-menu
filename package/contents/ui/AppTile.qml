@@ -15,6 +15,9 @@ QQC2.AbstractButton {
     property var iconSource
     property string favoriteId: ""
     property int iconSize: Kirigami.Units.iconSizes.medium
+    // Ustawiane przez delegat siatki: kafelek wskazany strzałkami
+    // (w trybie nawigacji klawiaturą) — podświetlany jak hover.
+    property bool keyboardSelected: false
 
     signal triggered()
     // Akcja z menu kontekstowego do wykonania na modelu źródłowym wiersza
@@ -52,9 +55,13 @@ QQC2.AbstractButton {
 
     background: Rectangle {
         radius: Kirigami.Units.cornerRadius
+        // W trybie nawigacji klawiaturą hover pod kursorem NIE świeci —
+        // podświetlony (tym samym kolorem) jest wyłącznie kafelek
+        // wybrany strzałkami.
         color: tile.pressed
             ? Qt.alpha(Kirigami.Theme.textColor, 0.15)
-            : tile.hovered || tile.visualFocus
+            : tile.keyboardSelected || tile.visualFocus
+                  || (tile.hovered && !root.keyboardNav)
                 ? Qt.alpha(Kirigami.Theme.textColor, 0.08)
                 : "transparent"
     }
