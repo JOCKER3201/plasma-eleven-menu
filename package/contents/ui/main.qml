@@ -40,6 +40,12 @@ PlasmoidItem {
     // drogi do pełnej skali): przy interfejsie 200% teksty mają 150%.
     readonly property real fontScale: 1 + (uiScale - 1) / 2
 
+    // Tryb nawigacji klawiaturą: strzałki/Enter w widokach go włączają,
+    // ruch myszy nad menu wyłącza. Gdy aktywny, podświetlenie hover pod
+    // kursorem gaśnie, a element wybrany strzałkami jest podświetlony
+    // IDENTYCZNIE jak hover (jedno podświetlenie naraz).
+    property bool keyboardNav: false
+
     // Wzorzec jak w Application Dashboard (kickerdash, zweryfikowany
     // w źródłach Plasmy 6.7.5): IKONA w panelu jest fullRepresentation
     // renderowaną inline (preferred == full, bez switchWidth/Height applet
