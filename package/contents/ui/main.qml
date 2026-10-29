@@ -113,8 +113,19 @@ PlasmoidItem {
     // Status appletu trzyma widoczny tylko panel-gospodarza; pozostałe
     // panele ekranu (autoukrywanie / unikanie okien) przełączamy przez
     // interfejs skryptowy plasmashell na "windowsgobelow" (widoczne nad
-    // oknami, bez rezerwowania miejsca) i przywracamy przy zamknięciu. Kopia trybów trafia do konfiguracji appletu, więc po
-    // ewentualnej awarii stan naprawia się przy następnym starcie.
+    // oknami, bez rezerwowania miejsca) i przywracamy przy zamknięciu.
+    //
+    // KOPIA TRYBÓW ŻYJE W PLIKU NA DYSKU (nie w konfiguracji appletu!):
+    // ~/.config/plasma-eleven-menu/panel-backup.json. Konfiguracja
+    // appletu odpada jako nośnik, bo plasmashell zrzuca ją na dysk
+    // leniwie — przy zamknięciu systemu z otwartym menu tryby paneli
+    // zdążały się utrwalić, a kopia nie, i panele zostawały w
+    // "windowsgobelow" bez śladu po oryginale. Plik jest zapisywany
+    // SYNCHRONICZNIE (sync + atomowe mv) PRZED mutacją paneli, powstaje
+    // tylko gdy faktycznie jest co zawieszać, przy starcie plasmashell
+    // (= starcie appletu) jest wgrywany z ponawianiem, a po KAŻDYM
+    // potwierdzonym przywróceniu — usuwany. Samo istnienie pliku znaczy
+    // więc: "panele są zmienione i czekają na przywrócenie".
 
     // Tryb Game Mode (Bazzite): dostępny tylko, gdy przy starcie appletu
     // istnieje wykonywalny /usr/bin/return-to-gamemode.
@@ -125,12 +136,23 @@ PlasmoidItem {
         shellExec.connectSource("/usr/bin/return-to-gamemode")
     }
 
-    // Maszyna stanu zawieszania paneli: idle -> reading -> applying ->
-    // active -> (restore) -> idle. NIEZMIENNIK: żaden panel nie trafia
-    // w windowsgobelow, zanim jego oryginalny tryb nie siedzi w configu,
-    // a kopia znika dopiero po POTWIERDZONYM przywróceniu.
+    // Maszyna stanu zawieszania paneli: idle -> reading -> persisting ->
+    // applying -> active -> (restore) -> idle. NIEZMIENNIK: żaden panel
+    // nie trafia w windowsgobelow, zanim jego oryginalny tryb nie siedzi
+    // W PLIKU NA DYSKU, a plik znika dopiero po POTWIERDZONYM
+    // przywróceniu.
     property string panelSuspendState: "idle"
     property int panelOpSeq: 0
+
+    // Kopia trybów w pamięci bieżącej sesji (lustro zawartości pliku).
+    property var panelBackup: []
+
+    // Ścieżka pliku kopii, w formie gotowej do wklejenia w komendę
+    // powłoki (rozwijana przez sh dopiero przy wykonaniu).
+    readonly property string backupDirSh:
+        '"${XDG_CONFIG_HOME:-$HOME/.config}/plasma-eleven-menu"'
+    readonly property string backupFileSh:
+        backupDirSh.slice(0, -1) + '/panel-backup.json"'
 
     P5Support.DataSource {
         id: shellExec
@@ -143,10 +165,14 @@ PlasmoidItem {
                     ok && (data.stdout ?? "").indexOf("GMYES") !== -1
             } else if (sourceName.indexOf("#suspendread") !== -1) {
                 root.onSuspendRead(ok, data.stdout ?? "")
+            } else if (sourceName.indexOf("#persist") !== -1) {
+                root.onPersistDone(ok)
             } else if (sourceName.indexOf("#apply") !== -1) {
                 root.onApplyDone(ok)
             } else if (sourceName.indexOf("#restore") !== -1) {
                 root.onRestoreDone(ok, data.stdout ?? "")
+            } else if (sourceName.indexOf("#bootread") !== -1) {
+                root.onBootRead(ok, data.stdout ?? "")
             }
             disconnectSource(sourceName)
         }
@@ -164,7 +190,7 @@ PlasmoidItem {
         if (panelSuspendState !== "idle") {
             return
         }
-        if (Plasmoid.configuration.panelHidingBackup.length > 0) {
+        if (panelBackup.length > 0) {
             // Zaległa kopia z poprzedniego cyklu — zajmie się nią restore.
             return
         }
@@ -183,8 +209,11 @@ PlasmoidItem {
             + " #suspendread:" + (++panelOpSeq))
     }
 
-    // Kopia trafia do configu PRZED jakąkolwiek mutacją; przełączenie
-    // paneli dopiero po zapisie i tylko gdy menu wciąż jest otwarte.
+    // FAZA 2: kopia trafia NA DYSK przed jakąkolwiek mutacją — zapis do
+    // pliku tymczasowego, sync (trwałość mimo twardego zamknięcia
+    // systemu) i atomowe mv. Kopia powstaje tylko, gdy odczyt znalazł
+    // panele do zawieszenia, czyli gdy stan paneli ma się różnić od
+    // tego, który użytkownik chce mieć po restarcie.
     function onSuspendRead(ok, stdout) {
         if (panelSuspendState !== "reading") {
             return
@@ -203,16 +232,45 @@ PlasmoidItem {
             panelSuspendState = "idle"
             return
         }
-        Plasmoid.configuration.panelHidingBackup = saved
         if (!fullscreenDialog.visible) {
             // Menu zamknięte zanim odpowiedź dojechała — nic nie mutujemy.
-            Plasmoid.configuration.panelHidingBackup = []
             panelSuspendState = "idle"
             return
         }
-        // FAZA 2: dopiero teraz przełączamy panele na windowsgobelow.
+        panelBackup = saved
+        panelSuspendState = "persisting"
+        shellExec.connectSource(
+            'd=' + backupDirSh + ' && mkdir -p "$d"'
+            + " && printf '%s' '" + JSON.stringify(Array.from(saved)) + "'"
+            + ' > "$d/panel-backup.json.tmp"'
+            + ' && sync "$d/panel-backup.json.tmp"'
+            + ' && mv -f "$d/panel-backup.json.tmp" "$d/panel-backup.json"'
+            + " #persist:" + (++panelOpSeq))
+    }
+
+    function onPersistDone(ok) {
+        if (panelSuspendState !== "persisting") {
+            return
+        }
+        if (!ok) {
+            // Bez utrwalonej kopii NIE WOLNO mutować paneli (lepiej, żeby
+            // panele chowały się pod menu, niż żeby po awarii zostały
+            // w windowsgobelow bez śladu po oryginalnych trybach).
+            panelBackup = []
+            panelSuspendState = "idle"
+            return
+        }
+        if (!fullscreenDialog.visible) {
+            // Menu zamknięte w trakcie zapisu — sprzątnij plik, nic nie mutuj.
+            shellExec.connectSource('rm -f ' + backupFileSh
+                + " #cleanup:" + (++panelOpSeq))
+            panelBackup = []
+            panelSuspendState = "idle"
+            return
+        }
+        // FAZA 3: dopiero teraz przełączamy panele na windowsgobelow.
         panelSuspendState = "applying"
-        const js = 'var items=' + JSON.stringify(Array.from(saved)) + ';'
+        const js = 'var items=' + JSON.stringify(Array.from(panelBackup)) + ';'
             + 'for (const it of items) {'
             + ' var parts = String(it).split(";");'
             + ' for (const p of panels()) {'
@@ -236,16 +294,18 @@ PlasmoidItem {
         }
     }
 
-    // Przywracanie z weryfikacją: kopia znika DOPIERO, gdy skrypt
+    // Przywracanie z weryfikacją: plik kopii znika DOPIERO, gdy skrypt
     // potwierdzi, że każdy wpis znalazł swój panel (licznik dopasowań —
     // chroni przed "pustym sukcesem" przy starcie, gdy panele jeszcze
     // nie istnieją) i żaden panel ekranu nie wisi już na windowsgobelow.
     function restorePanelHiding() {
-        if (panelSuspendState === "reading" || panelSuspendState === "applying") {
+        if (panelSuspendState === "reading"
+                || panelSuspendState === "persisting"
+                || panelSuspendState === "applying") {
             restoreRetryTimer.restart()
             return
         }
-        const backup = Plasmoid.configuration.panelHidingBackup
+        const backup = panelBackup
         if (!backup || backup.length === 0) {
             panelSuspendState = "idle"
             restoreRetryTimer.stop()
@@ -288,7 +348,13 @@ PlasmoidItem {
             }
         }
         if (confirmed) {
+            // Przywrócenie POTWIERDZONE — dopiero teraz kopia znika
+            // z dysku (i z zapasowego nośnika w configu, gdyby została
+            // tam po starszej wersji appletu).
+            shellExec.connectSource('rm -f ' + backupFileSh
+                + " #cleanup:" + (++panelOpSeq))
             Plasmoid.configuration.panelHidingBackup = []
+            panelBackup = []
             panelSuspendState = "idle"
             restoreRetryTimer.stop()
             restoreRetryTimer.attempts = 0
@@ -309,7 +375,7 @@ PlasmoidItem {
                 attempts = 0
                 return
             }
-            if (Plasmoid.configuration.panelHidingBackup.length === 0
+            if (root.panelBackup.length === 0
                     && panelSuspendState === "idle") {
                 stop()
                 attempts = 0
@@ -322,11 +388,13 @@ PlasmoidItem {
                 return
             }
             if ((panelSuspendState === "reading"
+                    || panelSuspendState === "persisting"
                     || panelSuspendState === "applying") && attempts >= 6) {
-                // Odpowiedź read/apply uznana za zgubioną.
+                // Odpowiedź read/persist/apply uznana za zgubioną.
                 panelSuspendState = "active"
             }
             if (panelSuspendState !== "reading"
+                    && panelSuspendState !== "persisting"
                     && panelSuspendState !== "applying") {
                 restorePanelHiding()
             }
@@ -444,10 +512,34 @@ PlasmoidItem {
         shellExec.connectSource(
             "test -x /usr/bin/return-to-gamemode && echo GMYES #gamemodecheck")
 
-        // Samonaprawa: jeśli po awarii zostały zawieszone tryby ukrywania
-        // paneli, przywróć je przy starcie.
-        if (Plasmoid.configuration.panelHidingBackup.length > 0) {
-            restorePanelHiding()
+        // Samonaprawa przy KAŻDYM starcie plasmashell: jeśli na dysku
+        // leży plik kopii trybów (menu nie zdążyło przywrócić paneli
+        // przed zamknięciem systemu), wgraj go i usuń.
+        shellExec.connectSource('cat ' + backupFileSh
+            + " #bootread:" + (++panelOpSeq))
+    }
+
+    function onBootRead(ok, stdout) {
+        let saved = []
+        if (ok) {
+            const a = stdout.indexOf("[")
+            const b = stdout.lastIndexOf("]")
+            if (a !== -1 && b > a) {
+                try {
+                    saved = JSON.parse(stdout.substring(a, b + 1))
+                } catch (e) {}
+            }
         }
+        if (saved.length === 0) {
+            // Migracja: starsza wersja appletu trzymała kopię w configu —
+            // jeśli tam coś zostało, też zasługuje na przywrócenie.
+            saved = Array.from(Plasmoid.configuration.panelHidingBackup ?? [])
+        }
+        if (saved.length === 0 || panelSuspendState !== "idle") {
+            return
+        }
+        panelBackup = saved
+        panelSuspendState = "active"
+        restorePanelHiding()
     }
 }
