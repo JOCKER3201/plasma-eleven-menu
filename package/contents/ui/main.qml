@@ -145,13 +145,29 @@ PlasmoidItem {
     property int panelOpSeq: 0
 
     // Kopia trybów w pamięci bieżącej sesji (lustro zawartości pliku).
+    // Wpis: "idPanelu;screen;location;trybInt" (tryb: 1=autohide,
+    // 2=dodgewindows — wartości enum VisibilityMode z panelview.h).
     property var panelBackup: []
 
-    // Ścieżka pliku kopii, w formie gotowej do wklejenia w komendę
-    // powłoki (rozwijana przez sh dopiero przy wykonaniu).
+    // Dwie instancje appletu (po jednej na monitor) działają w tym samym
+    // procesie plasmashell — każda ma WŁASNY plik kopii i własne
+    // znaczniki komend, żeby się wzajemnie nie kasowały i żeby silnik
+    // "executable" (deduplikuje identyczne komendy) ich nie sklejał.
+    readonly property string instanceTag: String(Plasmoid.id)
+
+    function opTag(name) {
+        return " #" + name + "@" + instanceTag + ":" + (++panelOpSeq)
+    }
+
+    // Ścieżki plików kopii, w formie gotowej do wklejenia w komendę
+    // powłoki (rozwijane przez sh dopiero przy wykonaniu).
     readonly property string backupDirSh:
         '"${XDG_CONFIG_HOME:-$HOME/.config}/plasma-eleven-menu"'
     readonly property string backupFileSh:
+        backupDirSh.slice(0, -1) + '/panel-backup-' + instanceTag + '.json"'
+    // Wspólny plik starszej wersji appletu — czytany i sprzątany
+    // migracyjnie przy starcie.
+    readonly property string legacyBackupFileSh:
         backupDirSh.slice(0, -1) + '/panel-backup.json"'
 
     P5Support.DataSource {
@@ -195,18 +211,25 @@ PlasmoidItem {
             return
         }
         panelSuspendState = "reading"
+        // Tryb zapisywany jako INT (1=autohide, 2=dodgewindows), a panel
+        // identyfikowany po p.id — to ten sam numer co w grupie
+        // [PlasmaViews][Panel <id>] w plasmashellrc, więc kopia pozwala
+        // później czytać i pisać tryb WPROST na dysku. Uwaga: panelu już
+        // będącego w windowsgobelow ten filtr nie złapie także dlatego,
+        // że getter p.hiding w Plasmie 6.7.5 zwraca dla niego "none"
+        // (brak case'a w Panel::hiding()).
         const sg = root.screenGeometry
         const js = 'var sx=' + sg.x + '; var sy=' + sg.y + '; var saved=[];'
             + 'for (const p of panels()) {'
             + ' var g = screenGeometry(p.screen);'
             + ' if (g.x==sx && g.y==sy'
             + '     && (p.hiding=="autohide" || p.hiding=="dodgewindows")) {'
-            + '  saved.push(String(p.screen)+";"+p.location+";"+p.hiding);'
+            + '  saved.push(String(p.id)+";"+String(p.screen)+";"+p.location'
+            + '    +";"+(p.hiding=="dodgewindows" ? "2" : "1"));'
             + ' }'
             + '}'
             + 'print(JSON.stringify(saved));'
-        shellExec.connectSource(shellScriptCommand(js)
-            + " #suspendread:" + (++panelOpSeq))
+        shellExec.connectSource(shellScriptCommand(js) + opTag("suspendread"))
     }
 
     // FAZA 2: kopia trafia NA DYSK przed jakąkolwiek mutacją — zapis do
@@ -239,13 +262,14 @@ PlasmoidItem {
         }
         panelBackup = saved
         panelSuspendState = "persisting"
+        const base = 'panel-backup-' + instanceTag + '.json'
         shellExec.connectSource(
             'd=' + backupDirSh + ' && mkdir -p "$d"'
             + " && printf '%s' '" + JSON.stringify(Array.from(saved)) + "'"
-            + ' > "$d/panel-backup.json.tmp"'
-            + ' && sync "$d/panel-backup.json.tmp"'
-            + ' && mv -f "$d/panel-backup.json.tmp" "$d/panel-backup.json"'
-            + " #persist:" + (++panelOpSeq))
+            + ' > "$d/' + base + '.tmp"'
+            + ' && sync "$d/' + base + '.tmp"'
+            + ' && mv -f "$d/' + base + '.tmp" "$d/' + base + '"'
+            + opTag("persist"))
     }
 
     function onPersistDone(ok) {
@@ -262,25 +286,26 @@ PlasmoidItem {
         }
         if (!fullscreenDialog.visible) {
             // Menu zamknięte w trakcie zapisu — sprzątnij plik, nic nie mutuj.
-            shellExec.connectSource('rm -f ' + backupFileSh
-                + " #cleanup:" + (++panelOpSeq))
+            shellExec.connectSource('rm -f ' + backupFileSh + opTag("cleanup"))
             panelBackup = []
             panelSuspendState = "idle"
             return
         }
-        // FAZA 3: dopiero teraz przełączamy panele na windowsgobelow.
+        // FAZA 3: dopiero teraz przełączamy panele na windowsgobelow
+        // (tylko w pamięci plasmashella — dysk zaktualizuje jego leniwy
+        // zapis; plik kopii już utrwalony, więc każdy scenariusz
+        // zamknięcia jest odwracalny).
         panelSuspendState = "applying"
         const js = 'var items=' + JSON.stringify(Array.from(panelBackup)) + ';'
             + 'for (const it of items) {'
             + ' var parts = String(it).split(";");'
             + ' for (const p of panels()) {'
-            + '  if (String(p.screen)==parts[0] && p.location==parts[1]) {'
+            + '  if (String(p.id)==parts[0]) {'
             + '   p.hiding = "windowsgobelow";'
             + '  }'
             + ' }'
             + '}'
-        shellExec.connectSource(shellScriptCommand(js)
-            + " #apply:" + (++panelOpSeq))
+        shellExec.connectSource(shellScriptCommand(js) + opTag("apply"))
     }
 
     function onApplyDone(ok) {
@@ -294,10 +319,21 @@ PlasmoidItem {
         }
     }
 
-    // Przywracanie z weryfikacją: plik kopii znika DOPIERO, gdy skrypt
-    // potwierdzi, że każdy wpis znalazł swój panel (licznik dopasowań —
-    // chroni przed "pustym sukcesem" przy starcie, gdy panele jeszcze
-    // nie istnieją) i żaden panel ekranu nie wisi już na windowsgobelow.
+    // Przywracanie z weryfikacją DYSKOWĄ. Trzy kroki w JEDNEJ komendzie:
+    // (A) evaluateScript ustawia p.hiding w PAMIĘCI plasmashella (żywy
+    //     efekt + jego przyszły leniwy zapis utrwali tę samą wartość),
+    // (B) kwriteconfig6 zapisuje panelVisibility WPROST do plasmashellrc
+    //     (trwałe od razu — plasmashell zapisuje config dopiero
+    //     debouncowanym timerem 10 s, który przy zamykaniu systemu
+    //     zwyczajnie nie zdąża; dlatego pamięciowe potwierdzenie było
+    //     fałszywe i panele wstawały z brudnego dysku),
+    // (C) kreadconfig6 czyta wartości Z POWROTEM — kopia znika DOPIERO,
+    //     gdy dysk pokazuje tryby użytkownika.
+    // Licznik dopasowań w (A) chroni przed "pustym sukcesem" przy
+    // starcie, gdy panele jeszcze nie istnieją. Dawna bramka "stuck"
+    // (zliczanie p.hiding=="windowsgobelow") usunięta: getter hiding
+    // w Plasmie 6.7.5 nie ma case'a dla windowsgobelow i zwraca "none",
+    // więc tamten licznik był tożsamościowo zerowy (martwy strażnik).
     function restorePanelHiding() {
         if (panelSuspendState === "reading"
                 || panelSuspendState === "persisting"
@@ -312,47 +348,67 @@ PlasmoidItem {
             restoreRetryTimer.attempts = 0
             return
         }
-        const sg = root.screenGeometry
-        const js = 'var sx=' + sg.x + '; var sy=' + sg.y + ';'
-            + 'var items=' + JSON.stringify(Array.from(backup)) + ';'
+        // Wpisy nowe: "id;screen;location;trybInt"; wpisy starszej wersji
+        // (migracja): "screen;location;trybString" — oba obsługiwane.
+        const js = 'var items=' + JSON.stringify(Array.from(backup)) + ';'
             + 'var matched=0;'
             + 'for (const it of items) {'
-            + ' var parts = String(it).split(";");'
+            + ' var q = String(it).split(";");'
             + ' for (const p of panels()) {'
-            + '  if (String(p.screen)==parts[0] && p.location==parts[1]) {'
-            + '   p.hiding = parts[2]; matched++;'
+            + '  var hit = (q.length>=4)'
+            + '    ? String(p.id)==q[0]'
+            + '    : (String(p.screen)==q[0] && p.location==q[1]);'
+            + '  if (hit) {'
+            + '   p.hiding = (q.length>=4)'
+            + '     ? (q[3]=="2" ? "dodgewindows" : "autohide")'
+            + '     : q[2];'
+            + '   matched++;'
             + '  }'
             + ' }'
             + '}'
-            + 'var stuck=0;'
-            + 'for (const p of panels()) {'
-            + ' var g = screenGeometry(p.screen);'
-            + ' if (g.x==sx && g.y==sy && p.hiding=="windowsgobelow") stuck++;'
-            + '}'
-            + 'print(JSON.stringify([matched, stuck, items.length]));'
-        shellExec.connectSource(shellScriptCommand(js)
-            + " #restore:" + (++panelOpSeq))
+            + 'print(matched);'
+        let cmd = shellScriptCommand(js) + ' && R=""'
+        for (const it of backup) {
+            const q = String(it).split(";")
+            if (q.length < 4) {
+                continue
+            }
+            cmd += ' && kwriteconfig6 --file plasmashellrc --group PlasmaViews'
+                + ' --group "Panel ' + q[0] + '" --key panelVisibility ' + q[3]
+                + ' && R="$R;$(kreadconfig6 --file plasmashellrc'
+                + ' --group PlasmaViews --group "Panel ' + q[0] + '"'
+                + ' --key panelVisibility)"'
+        }
+        cmd += ' && printf "READBACK%s" "$R"'
+        shellExec.connectSource(cmd + opTag("restore"))
         restoreRetryTimer.restart()
     }
 
     function onRestoreDone(ok, stdout) {
         let confirmed = false
         if (ok) {
-            const a = stdout.indexOf("[")
-            const b = stdout.lastIndexOf("]")
-            if (a !== -1 && b > a) {
-                try {
-                    const r = JSON.parse(stdout.substring(a, b + 1))
-                    confirmed = r.length === 3 && r[1] === 0 && r[0] >= r[2]
-                } catch (e) {}
+            // gdbus pakuje wynik print() w krotkę: ('N\n',).
+            const m = stdout.match(/\('([0-9]+)/)
+            const matched = m ? parseInt(m[1], 10) : -1
+            const idx = stdout.indexOf("READBACK")
+            const readback = idx === -1 ? [] : stdout.substring(idx + 8)
+                .trim().split(";").filter(s => s.length > 0)
+            const expected = []
+            for (const it of panelBackup) {
+                const q = String(it).split(";")
+                if (q.length >= 4) {
+                    expected.push(q[3])
+                }
             }
+            confirmed = matched >= panelBackup.length
+                && readback.length === expected.length
+                && expected.every((v, i) => readback[i] === v)
         }
         if (confirmed) {
-            // Przywrócenie POTWIERDZONE — dopiero teraz kopia znika
-            // z dysku (i z zapasowego nośnika w configu, gdyby została
-            // tam po starszej wersji appletu).
-            shellExec.connectSource('rm -f ' + backupFileSh
-                + " #cleanup:" + (++panelOpSeq))
+            // DYSK potwierdził tryby użytkownika — dopiero teraz kopia
+            // znika (plik instancji + migracyjne nośniki starszej wersji).
+            shellExec.connectSource('rm -f ' + backupFileSh + ' '
+                + legacyBackupFileSh + opTag("cleanup"))
             Plasmoid.configuration.panelHidingBackup = []
             panelBackup = []
             panelSuspendState = "idle"
@@ -510,29 +566,40 @@ PlasmoidItem {
 
         // Wykrycie trybu Game Mode (raz, przy uruchomieniu menu).
         shellExec.connectSource(
-            "test -x /usr/bin/return-to-gamemode && echo GMYES #gamemodecheck")
+            "test -x /usr/bin/return-to-gamemode && echo GMYES"
+            + opTag("gamemodecheck"))
 
         // Samonaprawa przy KAŻDYM starcie plasmashell: jeśli na dysku
-        // leży plik kopii trybów (menu nie zdążyło przywrócić paneli
-        // przed zamknięciem systemu), wgraj go i usuń.
+        // leży plik kopii trybów (restore nie zdążył albo jego zapis
+        // przepadł przy zamknięciu systemu), wgraj go — plik zniknie
+        // dopiero po dyskowym potwierdzeniu w onRestoreDone. Czytany
+        // jest plik TEJ instancji oraz, migracyjnie, wspólny plik
+        // starszej wersji appletu.
         shellExec.connectSource('cat ' + backupFileSh
-            + " #bootread:" + (++panelOpSeq))
+            + ' 2>/dev/null; printf "@@SEP@@"; cat ' + legacyBackupFileSh
+            + ' 2>/dev/null; true' + opTag("bootread"))
+    }
+
+    function parseBackupArray(text) {
+        const a = text.indexOf("[")
+        const b = text.lastIndexOf("]")
+        if (a === -1 || b <= a) {
+            return []
+        }
+        try {
+            const parsed = JSON.parse(text.substring(a, b + 1))
+            return Array.isArray(parsed) ? parsed : []
+        } catch (e) {
+            return []
+        }
     }
 
     function onBootRead(ok, stdout) {
-        let saved = []
-        if (ok) {
-            const a = stdout.indexOf("[")
-            const b = stdout.lastIndexOf("]")
-            if (a !== -1 && b > a) {
-                try {
-                    saved = JSON.parse(stdout.substring(a, b + 1))
-                } catch (e) {}
-            }
-        }
+        const parts = (stdout ?? "").split("@@SEP@@")
+        let saved = parseBackupArray(parts[0] ?? "")
+            .concat(parseBackupArray(parts[1] ?? ""))
         if (saved.length === 0) {
-            // Migracja: starsza wersja appletu trzymała kopię w configu —
-            // jeśli tam coś zostało, też zasługuje na przywrócenie.
+            // Migracja: najstarsza wersja appletu trzymała kopię w configu.
             saved = Array.from(Plasmoid.configuration.panelHidingBackup ?? [])
         }
         if (saved.length === 0 || panelSuspendState !== "idle") {

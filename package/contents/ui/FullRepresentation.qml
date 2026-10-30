@@ -164,7 +164,7 @@ FocusScope {
 
                     icon.name: root.fullscreenMode ? "view-restore" : "view-fullscreen"
                     icon.width: Math.round(Kirigami.Units.iconSizes.smallMedium * root.uiScale)
-                    icon.height: icon.width
+                    icon.height: Math.round(Kirigami.Units.iconSizes.smallMedium * root.uiScale)
                     display: QQC2.AbstractButton.IconOnly
                     text: root.fullscreenMode
                         ? i18n("Wyłącz tryb pełnoekranowy")
@@ -250,7 +250,7 @@ FocusScope {
 
                     icon.name: "system-shutdown"
                     icon.width: Math.round(Kirigami.Units.iconSizes.smallMedium * root.uiScale)
-                    icon.height: icon.width
+                    icon.height: Math.round(Kirigami.Units.iconSizes.smallMedium * root.uiScale)
                     display: QQC2.AbstractButton.IconOnly
                     text: i18n("Zasilanie")
 

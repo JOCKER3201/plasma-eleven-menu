@@ -43,7 +43,7 @@ Item {
             PC3.ToolButton {
                 icon.name: "go-previous"
                 icon.width: Math.round(Kirigami.Units.iconSizes.smallMedium * root.uiScale)
-                icon.height: icon.width
+                icon.height: Math.round(Kirigami.Units.iconSizes.smallMedium * root.uiScale)
                 display: QQC2.AbstractButton.IconOnly
                 text: i18n("Wstecz")
 
