@@ -10,7 +10,7 @@ import org.kde.plasma.components as PC3
 import org.kde.plasma.extras as PlasmaExtras
 import org.kde.kirigami as Kirigami
 
-// Folder kategorii: wypełnia całą powierzchnię menu pod polem wyszukiwania.
+// Category folder: fills the whole menu surface below the search field.
 Item {
     id: page
 
@@ -20,8 +20,8 @@ Item {
 
     readonly property var stackView: QQC2.StackView.view
 
-    // Wejście z pola wyszukiwania strzałką w dół (oraz od razu po
-    // otwarciu folderu klawiaturą).
+    // Entry from the search field with the down arrow (and right after
+    // opening the folder with the keyboard).
     function focusFirst() {
         root.keyboardNav = true
         if (appsGrid.count > 0) {
@@ -45,7 +45,7 @@ Item {
                 icon.width: Math.round(Kirigami.Units.iconSizes.smallMedium * root.uiScale)
                 icon.height: Math.round(Kirigami.Units.iconSizes.smallMedium * root.uiScale)
                 display: QQC2.AbstractButton.IconOnly
-                text: i18n("Wstecz")
+                text: i18n("Back")
 
                 QQC2.ToolTip.text: text
                 QQC2.ToolTip.visible: hovered
@@ -65,8 +65,8 @@ Item {
             PlasmaExtras.Heading {
                 Layout.fillWidth: true
                 level: 3
-                // Jawna skala interfejsu; 1.15 to mnożnik poziomu 3
-                // z PlasmaExtras.Heading (własny binding, nie dziedziczy).
+                // Explicit interface scale; 1.15 is the level-3 multiplier
+                // from PlasmaExtras.Heading (its own binding, not inherited).
                 font.pointSize: Kirigami.Theme.defaultFont.pointSize * 1.15 * root.fontScale
                 text: page.title
                 elide: Text.ElideRight
@@ -85,8 +85,8 @@ Item {
             Layout.rightMargin: Kirigami.Units.gridUnit
 
             clip: true
-            // Ta siatka przewija się sama, więc wbudowana nawigacja
-            // strzałkami sama doprowadza wybrany kafelek do widoku.
+            // This grid scrolls by itself, so the built-in arrow-key
+            // navigation brings the selected tile into view on its own.
             keyNavigationEnabled: true
             cellWidth: Math.floor(width / columns)
             cellHeight: root.appIconSize + Math.round(Kirigami.Units.gridUnit * 2.5 * root.uiScale)
@@ -133,7 +133,7 @@ Item {
                     && appsGrid.activeFocus && root.keyboardNav
                 onTriggered: {
                     if (model.hasChildren) {
-                        // Podkategoria: otwórz kolejny folder na całej powierzchni.
+                        // Subcategory: open another folder on the whole surface.
                         const sub = page.stackView.push(
                             Qt.resolvedUrl("CategoryPage.qml"), {
                                 categoryModel: page.categoryModel.modelForRow(index),

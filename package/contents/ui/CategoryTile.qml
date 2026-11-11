@@ -7,16 +7,16 @@ import QtQuick
 import QtQuick.Controls as QQC2
 import org.kde.kirigami as Kirigami
 
-// Kafelek kategorii jak w menu Start Windows 11: zaokrąglona płytka
-// z podglądem 2×2 ikon pierwszych aplikacji i podpisem pod spodem.
+// Category tile like in the Windows 11 Start menu: a rounded plate with
+// a 2×2 icon preview of the first applications and a caption underneath.
 QQC2.AbstractButton {
     id: tile
 
-    // Model aplikacji tej kategorii (do podglądu mini-ikon).
+    // The application model of this category (for the mini-icon preview).
     property var categoryModel
 
-    // Kafelek wskazany strzałkami (tryb nawigacji klawiaturą) —
-    // podświetlany jak hover.
+    // The tile pointed at with the arrow keys (keyboard navigation mode) —
+    // highlighted like hover.
     property bool keyboardSelected: false
 
     signal opened()
@@ -46,8 +46,8 @@ QQC2.AbstractButton {
             border.color: Kirigami.Theme.highlightColor
             clip: true
 
-            // Podgląd zawartości: pierwsze cztery ikony aplikacji (2×2);
-            // wielkość mini-ikon idzie za ustawieniem wielkości ikon.
+            // Content preview: the first four application icons (2×2);
+            // the mini-icon size follows the icon size setting.
             GridView {
                 id: miniGrid
 

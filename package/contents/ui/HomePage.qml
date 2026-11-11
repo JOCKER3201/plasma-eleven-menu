@@ -21,8 +21,8 @@ Flickable {
     contentHeight: content.implicitHeight
     boundsBehavior: Flickable.StopAtBounds
 
-    // Wejście z pola wyszukiwania strzałką w dół: fokus na pierwszy
-    // kafelek (Przypięte, a gdy sekcja ukryta — kategorie).
+    // Entry from the search field with the down arrow: focus the first
+    // tile (Pinned, or the categories when that section is hidden).
     function focusFirst() {
         root.keyboardNav = true
         const grid = pinnedGrid.visible ? pinnedGrid : categoriesGrid
@@ -32,8 +32,9 @@ Flickable {
         }
     }
 
-    // Siatki nie przewijają się same (pełna wysokość w Flickable) —
-    // kafelek wybrany strzałkami doprowadzamy do widoku ręcznie.
+    // The grids do not scroll by themselves (full height inside the
+    // Flickable) — a tile selected with the arrow keys is brought into
+    // view manually.
     function ensureVisible(item) {
         if (!item) {
             return
@@ -56,16 +57,16 @@ Flickable {
         height: implicitHeight
         spacing: Kirigami.Units.largeSpacing
 
-        // ------------------------- Przypięte -------------------------
+        // -------------------------- Pinned ---------------------------
 
         PlasmaExtras.Heading {
             Layout.leftMargin: Kirigami.Units.gridUnit
             level: 4
-            // Heading ma własny binding rozmiaru (nie dziedziczy fontu
-            // z menu) — skala interfejsu nakładana jawnie; 1.10 to mnożnik
-            // poziomu 4 z PlasmaExtras.Heading.
+            // Heading has its own size binding (it does not inherit the
+            // menu font) — the interface scale is applied explicitly; 1.10
+            // is the level-4 multiplier from PlasmaExtras.Heading.
             font.pointSize: Kirigami.Theme.defaultFont.pointSize * 1.10 * root.fontScale
-            text: i18n("Przypięte")
+            text: i18n("Pinned")
             visible: pinnedGrid.visible
         }
 
@@ -82,16 +83,16 @@ Flickable {
 
             visible: Plasmoid.configuration.showPinned && count > 0
             interactive: false
-            // Przy interactive: false wbudowana nawigacja strzałkami jest
-            // domyślnie wyłączona — włączamy jawnie.
+            // With interactive: false the built-in arrow-key navigation is
+            // disabled by default — enable it explicitly.
             keyNavigationEnabled: true
             cellWidth: Math.floor(width / columns)
             cellHeight: root.appIconSize + Math.round(Kirigami.Units.gridUnit * 2.5 * root.uiScale)
 
             model: rootModel.favoritesModel
 
-            // Wejście z siatki kategorii strzałką w górę: ostatni wiersz,
-            // możliwie ta sama kolumna.
+            // Entry from the categories grid with the up arrow: the last
+            // row, the same column if possible.
             function focusFromBelow(col) {
                 const lastRowStart =
                     (Math.ceil(count / columns) - 1) * columns
@@ -135,7 +136,7 @@ Flickable {
                         categoriesGrid.focusFromAbove(currentIndex % columns)
                         event.accepted = true
                     }
-                    // Pozostałe ruchy obsługuje wbudowana nawigacja GridView.
+                    // The remaining moves are handled by GridView's built-in navigation.
                 }
             }
 
@@ -160,13 +161,13 @@ Flickable {
             }
         }
 
-        // --------------------- Wszystko: kategorie --------------------
+        // ----------------------- All: categories ----------------------
 
         PlasmaExtras.Heading {
             Layout.leftMargin: Kirigami.Units.gridUnit
             level: 4
             font.pointSize: Kirigami.Theme.defaultFont.pointSize * 1.10 * root.fontScale
-            text: i18n("Wszystko")
+            text: i18n("All")
         }
 
         GridView {
@@ -187,8 +188,8 @@ Flickable {
 
             model: rootModel
 
-            // Wejście z siatki Przypiętych strzałką w dół: pierwszy
-            // wiersz, możliwie ta sama kolumna.
+            // Entry from the Pinned grid with the down arrow: the first
+            // row, the same column if possible.
             function focusFromAbove(col) {
                 currentIndex = Math.min(col, count - 1)
                 forceActiveFocus()
@@ -247,7 +248,8 @@ Flickable {
                             title: model.display,
                             categoryIcon: model.decoration
                         })
-                    // Folder otwarty klawiaturą od razu przejmuje strzałki.
+                    // A folder opened with the keyboard takes over the
+                    // arrow keys right away.
                     if (root.keyboardNav && page && page.focusFirst) {
                         page.focusFirst()
                     }

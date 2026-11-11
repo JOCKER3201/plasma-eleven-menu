@@ -1,9 +1,9 @@
-# plasma-eleven-menu — instalacja i pakowanie
+# plasma-eleven-menu — installation and packaging
 #
-#   make install        instalacja/aktualizacja dla bieżącego użytkownika
-#   sudo make install   instalacja/aktualizacja globalna (systemowa)
-#   make uninstall      usunięcie (sudo make uninstall — wersji globalnej)
-#   make package        archiwum plasma-eleven-menu-<wersja>.tar.xz
+#   make install        install/update for the current user
+#   sudo make install   global (system-wide) install/update
+#   make uninstall      removal (sudo make uninstall — for the global version)
+#   make package        plasma-eleven-menu-<version>.tar.xz archive
 
 PKGTOOL ?= kpackagetool6
 TYPE    := Plasma/Applet
@@ -11,7 +11,7 @@ NAME    := plasma-eleven-menu
 ID      := com.github.jocker3201.elevenmenu
 VERSION := $(shell sed -n 's/.*"Version": *"\([^"]*\)".*/\1/p' package/metadata.json)
 
-# Uruchomione przez roota (sudo make install) instaluje globalnie.
+# When run as root (sudo make install), install globally.
 ifeq ($(shell id -u),0)
 GLOBAL := --global
 endif
@@ -27,4 +27,4 @@ uninstall:
 
 package:
 	tar -cJf $(NAME)-$(VERSION).tar.xz -C package metadata.json contents
-	@echo "Utworzono: $(NAME)-$(VERSION).tar.xz"
+	@echo "Created: $(NAME)-$(VERSION).tar.xz"

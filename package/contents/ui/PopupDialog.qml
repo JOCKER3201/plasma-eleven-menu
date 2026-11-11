@@ -8,11 +8,11 @@ import org.kde.plasma.core as PlasmaCore
 import org.kde.plasma.plasmoid
 import org.kde.kirigami as Kirigami
 
-// Zwykłe menu-popup — własny dialog plazmowy. Wbudowany popup appletu
-// nie istnieje (plasmoid celowo nie ma fullRepresentation — patrz
-// main.qml), więc ten dialog jest jedyną "zwykłą" postacią menu.
-// Otwiera się i zamyka tą samą animacją co tryb pełnoekranowy
-// (skalowanie od/do środka + przenikanie).
+// The regular popup menu — our own Plasma dialog. The applet's built-in
+// popup does not exist (the plasmoid deliberately has no
+// fullRepresentation popup — see main.qml), so this dialog is the menu's
+// only "regular" form. It opens and closes with the same animation as the
+// full-screen mode (scaling from/to the center + a fade).
 PlasmaCore.Dialog {
     id: dlg
 
@@ -21,20 +21,20 @@ PlasmaCore.Dialog {
     location: PlasmaCore.Types.Floating
     flags: Qt.FramelessWindowHint
 
-    // Zamknięciem (też po utracie aktywności) sterujemy sami, żeby zawsze
-    // przechodziło przez animację zamykania.
+    // We drive closing ourselves (also after losing focus), so it always
+    // goes through the closing animation.
     hideOnWindowDeactivate: false
 
-    // Pozycja jawna (ten sam mechanizm co w FullscreenDialog):
-    // poziomo — środek ekranu + przesunięcie z ustawień (popupOffsetX);
-    // pionowo — odstęp menu od panelu równy odstępowi panelu od krawędzi
-    // ekranu (symetria z pływającym panelem; dla przylegającego panelu
-    // odstęp wynosi 0) + przesunięcie z ustawień (popupOffsetY, dodatnie
-    // oddala od panelu).
+    // Explicit position (the same mechanism as in FullscreenDialog):
+    // horizontally — the center of the screen + the offset from the
+    // settings (popupOffsetX); vertically — the menu's gap from the panel
+    // equal to the panel's gap from the screen edge (symmetry with a
+    // floating panel; for a touching panel the gap is 0) + the offset from
+    // the settings (popupOffsetY, positive moves away from the panel).
     readonly property bool panelAtTop:
         Plasmoid.location === PlasmaCore.Types.TopEdge
 
-    // Odstęp panelu od krawędzi ekranu, mierzony z geometrii okna panelu.
+    // The panel's gap from the screen edge, measured from the panel window geometry.
     readonly property int panelEdgeGap: {
         const sg = root.screenGeometry
         const pw = root.panelWindow
@@ -67,12 +67,12 @@ PlasmaCore.Dialog {
         return panelTop - panelEdgeGap - dlg.height - offset
     }
 
-    // Chwila rozpoczęcia ostatniego zamykania — kliknięcie ikony w panelu
-    // najpierw dezaktywuje dialog (co uruchamia zamykanie), a dopiero
-    // potem dociera do nas; bez tej blokady ikona nie umiałaby zamykać.
+    // The moment the last close started — clicking the panel icon first
+    // deactivates the dialog (which starts the close) and only then
+    // reaches us; without this guard the icon could not close the menu.
     property double lastClosedAt: 0
 
-    // Animacja otwarcia czeka na pierwszą WYRENDEROWANĄ klatkę okna.
+    // The open animation waits for the window's first RENDERED frame.
     property bool pendingOpen: false
 
     function openMenu() {
@@ -81,10 +81,10 @@ PlasmaCore.Dialog {
         }
         closeAnimation.stop()
         openAnimation.stop()
-        // Stan początkowy PRZED pokazaniem: pierwsza (jednorazowo kosztowna
-        // przy zimnym starcie) klatka renderuje się niewidocznie, a zegar
-        // animacji nie biegnie, zanim cokolwiek trafi na ekran — inaczej
-        // animacja "mija" podczas budowy sceny i menu pojawia się skokiem.
+        // Initial state BEFORE showing: the first frame (a one-time cost on
+        // a cold start) renders invisibly, and the animation clock does not
+        // run before anything reaches the screen — otherwise the animation
+        // "passes by" while the scene is built and the menu pops in abruptly.
         popupRoot.scale = 0.6
         popupRoot.opacity = 0.0
         pendingOpen = true
@@ -111,8 +111,8 @@ PlasmaCore.Dialog {
         }
     }
 
-    // Jak natywny popup: zniknij (z animacją), gdy użytkownik kliknie
-    // gdzie indziej.
+    // Like a native popup: disappear (with the animation) when the user
+    // clicks elsewhere.
     onActiveChanged: {
         if (!active && visible) {
             closeMenu()
@@ -122,9 +122,10 @@ PlasmaCore.Dialog {
     mainItem: Item {
         id: popupRoot
 
-        // Rozmiar bazowy powiększany procentowo z ustawień (0% = domyślny)
-        // oraz skalą interfejsu — przy większych elementach i czcionkach
-        // rośnie całe okno menu, nie maleje pojemność widoków.
+        // The base size is enlarged by the percentage from the settings
+        // (0% = default) and by the interface scale — with bigger elements
+        // and fonts the whole menu window grows, instead of the views
+        // losing capacity.
         readonly property real sizeFactor:
             (1 + Plasmoid.configuration.popupSizeIncrease / 100) * root.uiScale
 
@@ -149,8 +150,8 @@ PlasmaCore.Dialog {
             focus: true
         }
 
-        // Start animacji od pierwszej pokazanej klatki; Timer to bezpiecznik
-        // na wypadek, gdyby klatka nie nadeszła (menu nigdy nie utknie).
+        // Start the animation on the first shown frame; the Timer is a
+        // safety net in case the frame never arrives (the menu never gets stuck).
         Connections {
             target: dlg
             ignoreUnknownSignals: true
@@ -196,8 +197,8 @@ PlasmaCore.Dialog {
             }
         }
 
-        // Zamykanie: ta sama animacja odtwarzana w drugą stronę; okno
-        // znika dopiero po jej zakończeniu.
+        // Closing: the same animation played in reverse; the window
+        // disappears only once it has finished.
         SequentialAnimation {
             id: closeAnimation
 

@@ -6,9 +6,9 @@
 import QtQuick
 import org.kde.plasma.extras as PlasmaExtras
 
-// Natywne menu kontekstowe Plazmy budowane z listy akcji backendu kicker
-// (rola actionList: elementy {text, icon, actionId, actionArgument,
-// separator, type}). Te same dane napędzają menu kontekstowe Kickoffa.
+// A native Plasma context menu built from a kicker-backend action list
+// (the actionList role: {text, icon, actionId, actionArgument, separator,
+// type} elements). The same data drives Kickoff's context menus.
 PlasmaExtras.Menu {
     id: menu
 
@@ -22,8 +22,9 @@ PlasmaExtras.Menu {
         delegate: PlasmaExtras.MenuItem {
             required property var modelData
 
-            // Separatory bywają kodowane jako {separator: true} albo
-            // {type: "separator"}; element bez actionId też nie jest akcją.
+            // Separators are sometimes encoded as {separator: true} and
+            // sometimes as {type: "separator"}; an element without an
+            // actionId is not an action either.
             readonly property string entryActionId: modelData.actionId ?? ""
             readonly property bool isSeparator: modelData.separator === true
                 || modelData.type === "separator"
@@ -37,9 +38,9 @@ PlasmaExtras.Menu {
             enabled: !isSeparator && !isTitle && entryActionId.length > 0
                 && modelData.enabled !== false
 
-            // Puste actionId NIGDY nie opuszcza menu — trigger(index, "", …)
-            // oznacza "uruchom aplikację", a menu kontekstowe nie ma prawa
-            // tego robić.
+            // An empty actionId NEVER leaves the menu — trigger(index, "", …)
+            // means "launch the application", and a context menu has no
+            // business doing that.
             onClicked: {
                 if (entryActionId.length > 0) {
                     menu.actionClicked(entryActionId, modelData.actionArgument)

@@ -7,47 +7,47 @@
 
     <group name="General">
         <entry name="icon" type="String">
-            <label>Ikona pokazywana w panelu.</label>
+            <label>Icon shown in the panel.</label>
             <default>start-here-kde-plasma</default>
         </entry>
         <entry name="favorites" type="StringList">
-            <label>Początkowa lista przypiętych aplikacji (tylko pierwsze uruchomienie).</label>
+            <label>Initial list of pinned applications (first run only).</label>
             <default>preferred://browser,org.kde.dolphin.desktop,org.kde.konsole.desktop,systemsettings.desktop</default>
         </entry>
         <entry name="favoritesSeeded" type="Bool">
-            <label>Czy początkowa lista przypiętych została już wczytana do bazy ulubionych.</label>
+            <label>Whether the initial pinned list has already been loaded into the favorites database.</label>
             <default>false</default>
         </entry>
         <entry name="showPinned" type="Bool">
-            <label>Czy pokazywać sekcję Przypięte na stronie głównej.</label>
+            <label>Whether to show the Pinned section on the home page.</label>
             <default>true</default>
         </entry>
         <entry name="iconSize" type="Int">
-            <label>Wielkość interfejsu menu: bazowy rozmiar ikon w pikselach (32 = 100%); skaluje ikony, czcionki, kafelki i okno popupu.</label>
+            <label>Menu interface size: base icon size in pixels (32 = 100%); scales icons, fonts, tiles and the popup window.</label>
             <default>32</default>
         </entry>
         <entry name="powerActions" type="StringList">
-            <label>Akcje pokazywane w menu zasilania, w kolejności wyświetlania.</label>
+            <label>Actions shown in the power menu, in display order.</label>
             <default>lock-screen,suspend,shutdown,reboot</default>
         </entry>
         <entry name="fullscreen" type="Bool">
-            <label>Czy menu otwiera się w trybie pełnoekranowym (wypełnia obszar roboczy, panele zostają widoczne).</label>
+            <label>Whether the menu opens in full-screen mode (fills the work area, panels stay visible).</label>
             <default>false</default>
         </entry>
         <entry name="popupOffsetX" type="Int">
-            <label>Przesunięcie poziome zwykłego menu w pikselach; 0 = środek ekranu.</label>
+            <label>Horizontal offset of the regular menu in pixels; 0 = center of the screen.</label>
             <default>0</default>
         </entry>
         <entry name="popupOffsetY" type="Int">
-            <label>Przesunięcie pionowe zwykłego menu w pikselach; 0 = odstęp od panelu równy odstępowi panelu od krawędzi ekranu.</label>
+            <label>Vertical offset of the regular menu in pixels; 0 = menu-to-panel gap equal to the panel's gap from the screen edge.</label>
             <default>0</default>
         </entry>
         <entry name="popupSizeIncrease" type="Int">
-            <label>Powiększenie zwykłego menu w procentach; 0 = rozmiar domyślny.</label>
+            <label>Size increase of the regular menu in percent; 0 = default size.</label>
             <default>0</default>
         </entry>
         <entry name="panelHidingBackup" type="StringList">
-            <label>Wewnętrzne: zapamiętane tryby ukrywania paneli zawieszone na czas menu pełnoekranowego (ekran;krawędź;tryb).</label>
+            <label>Internal: remembered panel hiding modes suspended while the full-screen menu is open (screen;edge;mode).</label>
             <default></default>
         </entry>
     </group>

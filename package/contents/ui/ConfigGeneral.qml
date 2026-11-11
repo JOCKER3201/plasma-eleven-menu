@@ -14,11 +14,12 @@ import org.kde.plasma.plasma5support as P5Support
 KCM.SimpleKCM {
     id: configGeneral
 
-    // Okno konfiguracji Plasmy wstrzykuje przy otwarciu strony property
-    // `title` oraz `cfg_<klucz>` i `cfg_<klucz>Default` dla KAŻDEGO wpisu
-    // z config/main.xml. Wszystkie muszą istnieć — brak którejkolwiek
-    // przerywa inicjalizację strony (strona nie trafia do sceny, wartości
-    // nie są wstrzykiwane, a przycisk Zastosuj zostaje nieaktywny).
+    // When the page opens, the Plasma configuration window injects the
+    // `title` property and `cfg_<key>` plus `cfg_<key>Default` for EVERY
+    // entry in config/main.xml. All of them must exist — a single missing
+    // one aborts the page initialization (the page never reaches the
+    // scene, the values are not injected, and the Apply button stays
+    // disabled).
     property string cfg_icon
     property var cfg_favorites: []
     property bool cfg_favoritesSeeded
@@ -43,19 +44,19 @@ KCM.SimpleKCM {
     property int cfg_popupSizeIncreaseDefault
     property var cfg_panelHidingBackupDefault: []
 
-    // Wszystkie dostępne akcje zasilania w ustalonej kolejności wyświetlania.
+    // All available power actions, in a fixed display order.
     readonly property var allPowerActions: [
-        { id: "lock-screen", label: i18n("Zablokuj") },
-        { id: "suspend",     label: i18n("Uśpij") },
-        { id: "hibernate",   label: i18n("Hibernuj") },
-        { id: "shutdown",    label: i18n("Zamknij") },
-        { id: "reboot",      label: i18n("Uruchom ponownie") },
-        { id: "logout",      label: i18n("Wyloguj") },
-        { id: "gamemode",    label: i18n("Tryb Game Mode") }
+        { id: "lock-screen", label: i18n("Lock") },
+        { id: "suspend",     label: i18n("Sleep") },
+        { id: "hibernate",   label: i18n("Hibernate") },
+        { id: "shutdown",    label: i18n("Shut Down") },
+        { id: "reboot",      label: i18n("Restart") },
+        { id: "logout",      label: i18n("Log Out") },
+        { id: "gamemode",    label: i18n("Game Mode") }
     ]
 
-    // Tryb Game Mode wymaga /usr/bin/return-to-gamemode — sprawdzane przy
-    // otwarciu ustawień; bez niego opcja jest wyszarzona.
+    // Game Mode requires /usr/bin/return-to-gamemode — checked when the
+    // settings open; without it the option is grayed out.
     property bool gameModeAvailable: false
 
     P5Support.DataSource {
@@ -86,10 +87,10 @@ KCM.SimpleKCM {
 
     Kirigami.FormLayout {
 
-        // --------------------------- Ikona ---------------------------
+        // ---------------------------- Icon ----------------------------
 
         RowLayout {
-            Kirigami.FormData.label: i18n("Ikona w panelu:")
+            Kirigami.FormData.label: i18n("Panel icon:")
             spacing: Kirigami.Units.smallSpacing
 
             QQC2.Button {
@@ -102,7 +103,7 @@ KCM.SimpleKCM {
                 icon.name: "edit-undo"
                 enabled: configGeneral.cfg_icon !== configGeneral.cfg_iconDefault
 
-                QQC2.ToolTip.text: i18n("Przywróć domyślną ikonę")
+                QQC2.ToolTip.text: i18n("Reset to default icon")
                 QQC2.ToolTip.visible: hovered
                 QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
 
@@ -123,17 +124,17 @@ KCM.SimpleKCM {
             Kirigami.FormData.isSection: true
         }
 
-        // -------------------------- Wygląd ---------------------------
+        // ------------------------- Appearance -------------------------
 
         QQC2.CheckBox {
-            Kirigami.FormData.label: i18n("Strona główna:")
-            text: i18n("Pokazuj sekcję Przypięte")
+            Kirigami.FormData.label: i18n("Home page:")
+            text: i18n("Show the Pinned section")
             checked: configGeneral.cfg_showPinned
             onToggled: configGeneral.cfg_showPinned = checked
         }
 
         RowLayout {
-            Kirigami.FormData.label: i18n("Wielkość interfejsu:")
+            Kirigami.FormData.label: i18n("Interface size:")
             spacing: Kirigami.Units.smallSpacing
 
             QQC2.Slider {
@@ -155,7 +156,7 @@ KCM.SimpleKCM {
                 icon.name: "edit-undo"
                 enabled: configGeneral.cfg_iconSize !== 32
 
-                QQC2.ToolTip.text: i18n("Przywróć domyślną wielkość (100%)")
+                QQC2.ToolTip.text: i18n("Reset to default size (100%)")
                 QQC2.ToolTip.visible: hovered
                 QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
 
@@ -167,10 +168,10 @@ KCM.SimpleKCM {
             Kirigami.FormData.isSection: true
         }
 
-        // ------------------ Pozycja zwykłego menu --------------------
+        // ------------------ Regular menu position ---------------------
 
         RowLayout {
-            Kirigami.FormData.label: i18n("Przesunięcie w poziomie:")
+            Kirigami.FormData.label: i18n("Horizontal offset:")
             spacing: Kirigami.Units.smallSpacing
 
             QQC2.Slider {
@@ -193,7 +194,7 @@ KCM.SimpleKCM {
                 icon.name: "edit-undo"
                 enabled: configGeneral.cfg_popupOffsetX !== 0
 
-                QQC2.ToolTip.text: i18n("Wyzeruj (środek ekranu)")
+                QQC2.ToolTip.text: i18n("Reset to zero (center of the screen)")
                 QQC2.ToolTip.visible: hovered
                 QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
 
@@ -202,7 +203,7 @@ KCM.SimpleKCM {
         }
 
         RowLayout {
-            Kirigami.FormData.label: i18n("Przesunięcie w pionie:")
+            Kirigami.FormData.label: i18n("Vertical offset:")
             spacing: Kirigami.Units.smallSpacing
 
             QQC2.Slider {
@@ -225,7 +226,7 @@ KCM.SimpleKCM {
                 icon.name: "edit-undo"
                 enabled: configGeneral.cfg_popupOffsetY !== 0
 
-                QQC2.ToolTip.text: i18n("Wyzeruj (odstęp od panelu jak panelu od krawędzi ekranu)")
+                QQC2.ToolTip.text: i18n("Reset to zero (menu-to-panel gap equal to the panel's gap from the screen edge)")
                 QQC2.ToolTip.visible: hovered
                 QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
 
@@ -234,7 +235,7 @@ KCM.SimpleKCM {
         }
 
         RowLayout {
-            Kirigami.FormData.label: i18n("Powiększenie menu:")
+            Kirigami.FormData.label: i18n("Menu size increase:")
             spacing: Kirigami.Units.smallSpacing
 
             QQC2.Slider {
@@ -256,7 +257,7 @@ KCM.SimpleKCM {
                 icon.name: "edit-undo"
                 enabled: configGeneral.cfg_popupSizeIncrease !== 0
 
-                QQC2.ToolTip.text: i18n("Przywróć rozmiar domyślny")
+                QQC2.ToolTip.text: i18n("Reset to default size")
                 QQC2.ToolTip.visible: hovered
                 QQC2.ToolTip.delay: Kirigami.Units.toolTipDelay
 
@@ -268,10 +269,10 @@ KCM.SimpleKCM {
             Kirigami.FormData.isSection: true
         }
 
-        // ---------------------- Menu zasilania -----------------------
+        // -------------------------- Power menu ------------------------
 
         ColumnLayout {
-            Kirigami.FormData.label: i18n("Przycisk zasilania:")
+            Kirigami.FormData.label: i18n("Power button:")
             spacing: Kirigami.Units.smallSpacing
 
             Repeater {

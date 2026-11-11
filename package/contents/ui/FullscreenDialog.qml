@@ -8,11 +8,12 @@ import org.kde.plasma.core as PlasmaCore
 import org.kde.plasma.plasmoid
 import org.kde.kirigami as Kirigami
 
-// Tryb pełnoekranowy jako plazmowy popup (PlasmaCore.Dialog), nie okno:
-// dialog typu Normal pokrywa cały ekran, ale żyje w warstwie zwykłych
-// okien — panele Plasmy (warstwa zawsze-na-wierzchu) pozostają widoczne
-// i klikalne nad nim. Zawartość otwiera i zamyka animacja od/do środka
-// ekranu i jest odsunięta od krawędzi zajmowanych przez panele.
+// Full-screen mode as a Plasma popup (PlasmaCore.Dialog), not a window:
+// a Normal-type dialog covers the whole screen but lives in the regular
+// window layer — the Plasma panels (the always-on-top layer) stay visible
+// and clickable above it. The content opens and closes with an animation
+// from/to the center of the screen and is inset from the edges occupied
+// by panels.
 PlasmaCore.Dialog {
     id: dlg
 
@@ -21,19 +22,19 @@ PlasmaCore.Dialog {
     location: PlasmaCore.Types.Floating
     flags: Qt.FramelessWindowHint
 
-    // Zamknięciem (też po utracie aktywności) sterujemy sami, żeby zawsze
-    // przechodziło przez animację zamykania.
+    // We drive closing ourselves (also after losing focus), so it always
+    // goes through the closing animation.
     hideOnWindowDeactivate: false
 
     x: root.screenGeometry.x
     y: root.screenGeometry.y
 
-    // Chwila rozpoczęcia ostatniego zamykania — kliknięcie ikony w panelu
-    // najpierw dezaktywuje dialog (co uruchamia zamykanie), a dopiero potem
-    // przełącza stan; bez tej blokady ikona nie umiałaby zamykać menu.
+    // The moment the last close started — clicking the panel icon first
+    // deactivates the dialog (which starts the close) and only then toggles
+    // the state; without this guard the icon could not close the menu.
     property double lastClosedAt: 0
 
-    // Animacja otwarcia czeka na pierwszą WYRENDEROWANĄ klatkę okna.
+    // The open animation waits for the window's first RENDERED frame.
     property bool pendingOpen: false
 
     function openMenu() {
@@ -42,9 +43,9 @@ PlasmaCore.Dialog {
         }
         closeAnimation.stop()
         openAnimation.stop()
-        // Stan początkowy PRZED pokazaniem: pierwsza (jednorazowo kosztowna
-        // przy zimnym starcie) klatka renderuje się niewidocznie, a zegar
-        // animacji nie biegnie, zanim cokolwiek trafi na ekran.
+        // Initial state BEFORE showing: the first frame (a one-time cost on
+        // a cold start) renders invisibly, and the animation clock does not
+        // run before anything reaches the screen.
         screenItem.scale = 0.6
         screenItem.opacity = 0.0
         pendingOpen = true
@@ -52,8 +53,8 @@ PlasmaCore.Dialog {
         requestActivate()
         fsContent.reset()
         firstFrameFallback.restart()
-        // Panele z autoukrywaniem/unikaniem okien na tym ekranie mają
-        // zostać widoczne przez cały czas otwarcia menu.
+        // Auto-hiding/window-dodging panels on this screen are to stay
+        // visible for the whole time the menu is open.
         root.suspendPanelHiding()
     }
 
@@ -74,7 +75,7 @@ PlasmaCore.Dialog {
         }
     }
 
-    // Jak popup: zniknij (z animacją), gdy użytkownik kliknie gdzie indziej.
+    // Like a popup: disappear (with the animation) when the user clicks elsewhere.
     onActiveChanged: {
         if (!active && visible) {
             closeMenu()
@@ -97,8 +98,8 @@ PlasmaCore.Dialog {
             Kirigami.Theme.inherit: false
         }
 
-        // Zawartość omija panele: marginesy z każdej strony to odległość
-        // między krawędzią ekranu a obszarem wolnym od paneli.
+        // The content avoids the panels: the margin on each side is the
+        // distance between the screen edge and the panel-free area.
         FullRepresentation {
             id: fsContent
 
@@ -117,8 +118,8 @@ PlasmaCore.Dialog {
             focus: true
         }
 
-        // Start animacji od pierwszej pokazanej klatki; Timer to bezpiecznik
-        // na wypadek, gdyby klatka nie nadeszła (menu nigdy nie utknie).
+        // Start the animation on the first shown frame; the Timer is a
+        // safety net in case the frame never arrives (the menu never gets stuck).
         Connections {
             target: dlg
             ignoreUnknownSignals: true
@@ -164,8 +165,8 @@ PlasmaCore.Dialog {
             }
         }
 
-        // Zamykanie: ta sama animacja co otwieranie, odtwarzana w drugą
-        // stronę; okno znika dopiero po jej zakończeniu.
+        // Closing: the same animation as opening, played in reverse;
+        // the window disappears only once it has finished.
         SequentialAnimation {
             id: closeAnimation
 

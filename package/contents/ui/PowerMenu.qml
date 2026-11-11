@@ -7,11 +7,11 @@ import QtQuick
 import org.kde.plasma.plasmoid
 import org.kde.plasma.extras as PlasmaExtras
 
-// Menu zasilania: akcje systemowe z modelu kickera + opcjonalna pozycja
-// "Tryb Game Mode" (tylko gdy przy starcie appletu istnieje
-// /usr/bin/return-to-gamemode i akcja jest włączona w ustawieniach).
-// Pozycje modelowe są wstawiane zawsze PRZED separatorem Game Mode,
-// więc Game Mode trzyma się końca menu.
+// Power menu: system actions from the kicker model + an optional
+// "Game Mode" entry (only when an executable /usr/bin/return-to-gamemode
+// exists at applet start and the action is enabled in the settings).
+// The model entries are always inserted BEFORE the Game Mode separator,
+// so Game Mode sticks to the end of the menu.
 PlasmaExtras.Menu {
     id: menu
 
@@ -23,7 +23,7 @@ PlasmaExtras.Menu {
 
     PlasmaExtras.MenuItem {
         id: gameModeItem
-        text: i18n("Tryb Game Mode")
+        text: i18n("Game Mode")
         icon: "input-gaming"
         visible: root.gameModeAvailable
             && Plasmoid.configuration.powerActions.indexOf("gamemode") !== -1

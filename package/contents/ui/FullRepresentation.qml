@@ -31,8 +31,8 @@ FocusScope {
         root.keyboardNav = false
     }
 
-    // Cofnięcie o jeden widok (wyszukiwanie → folder → strona główna).
-    // Zwraca false, gdy nie było już czego cofać.
+    // Go back one view (search → folder → home page).
+    // Returns false when there was nothing left to go back from.
     function goBack() {
         if (searching) {
             searchField.text = ""
@@ -52,24 +52,24 @@ FocusScope {
         }
     }
 
-    // Wspólny mnożnik czcionek dla CAŁEGO menu: kontrolki QtQuick
-    // (Label, pola, przyciski, delegaty) dziedziczą font od najbliższego
-    // przodka typu Control, więc jeden przeskalowany pointSize tutaj
-    // powiększa teksty we wszystkich widokach. Elementy z własnym
-    // bindingiem rozmiaru (nagłówki, opisy wyników) skalują się jawnie.
+    // A shared font multiplier for the WHOLE menu: QtQuick controls
+    // (Label, fields, buttons, delegates) inherit the font from the
+    // nearest Control-type ancestor, so one scaled pointSize here enlarges
+    // text in all views. Elements with their own size binding (headings,
+    // result descriptions) scale explicitly.
     QQC2.Control {
         anchors.fill: parent
         font.pointSize: Kirigami.Theme.defaultFont.pointSize * root.fontScale
 
-        // Ruch myszy nad menu kończy tryb nawigacji klawiaturą
-        // (hover wraca, podświetlenie strzałkowe gaśnie). Handlery hover
-        // są kooperatywne — nie zabierają zdarzeń polu wyszukiwania
-        // ani kafelkom.
-        // UWAGA: Qt po każdej zmianie sceny pod kursorem dostarcza
-        // SYNTETYCZNE zdarzenie hover z niezmienioną pozycją myszy (samo
-        // przełączenie podświetlenia strzałkami by je wywołało i tryb
-        // gasł po jednej klatce) — dlatego tryb wyłącza dopiero
-        // RZECZYWISTA zmiana pozycji kursora.
+        // Mouse movement over the menu ends keyboard navigation mode
+        // (hover comes back, the arrow-key highlight goes out). The hover
+        // handlers are cooperative — they do not steal events from the
+        // search field or the tiles.
+        // NOTE: after every scene change under the cursor Qt delivers a
+        // SYNTHETIC hover event with an unchanged mouse position (merely
+        // moving the highlight with the arrow keys would trigger it and
+        // the mode would die after one frame) — so the mode is only
+        // disabled by an ACTUAL change of the cursor position.
         HoverHandler {
             id: pointerWatch
 
@@ -89,12 +89,12 @@ FocusScope {
             }
         }
 
-        // Spodnia warstwa (NIE nakładka!): boczne przyciski myszy cofają widok,
-        // a prawy klik w puste tło jest połykany. Leży pod całą zawartością,
-        // bo MouseArea zawsze ustawia kursor strzałki (setCursor w konstruktorze)
-        // — warstwa na wierzchu wymuszałaby strzałkę nad całym menu i psuła
-        // kursor tekstowy nad polem wyszukiwania. Zdarzenia i tak tu docierają:
-        // żaden element wyżej nie akceptuje tych przycisków.
+        // Bottom layer (NOT an overlay!): the side mouse buttons go back a
+        // view, and a right click on empty background is swallowed. It lies
+        // under all content, because a MouseArea always sets the arrow cursor
+        // (setCursor in the constructor) — a layer on top would force the
+        // arrow over the whole menu and break the text cursor over the search
+        // field. Events still get here: no element above accepts these buttons.
         MouseArea {
             anchors.fill: parent
             acceptedButtons: Qt.BackButton | Qt.ForwardButton | Qt.RightButton
@@ -122,10 +122,11 @@ FocusScope {
 
                     Layout.fillWidth: true
 
-                    placeholderText: i18n("Wyszukaj aplikacje, ustawienia i dokumenty")
+                    placeholderText: i18n("Search for apps, settings, and documents")
 
-                    // Kursor tekstowy nad całą pigułką pola, nie tylko nad samym
-                    // wewnętrznym obszarem tekstu (paddingi i ikona lupy go gubią).
+                    // Text cursor over the whole pill of the field, not just
+                    // over the inner text area itself (the paddings and the
+                    // magnifier icon lose it).
                     HoverHandler {
                         cursorShape: Qt.IBeamCursor
                     }
@@ -157,8 +158,8 @@ FocusScope {
                     }
                 }
 
-                // Przełącznik trybu pełnoekranowego — prawy górny narożnik,
-                // ten sam w obu trybach (popup i okno pełnoekranowe).
+                // Full-screen mode toggle — top-right corner, the same one
+                // in both modes (popup and full-screen window).
                 PC3.ToolButton {
                     id: fullscreenButton
 
@@ -167,8 +168,8 @@ FocusScope {
                     icon.height: Math.round(Kirigami.Units.iconSizes.smallMedium * root.uiScale)
                     display: QQC2.AbstractButton.IconOnly
                     text: root.fullscreenMode
-                        ? i18n("Wyłącz tryb pełnoekranowy")
-                        : i18n("Tryb pełnoekranowy")
+                        ? i18n("Exit full-screen mode")
+                        : i18n("Full-screen mode")
 
                     QQC2.ToolTip.text: text
                     QQC2.ToolTip.visible: hovered
@@ -178,8 +179,8 @@ FocusScope {
                 }
             }
 
-            // Cała powierzchnia menu pod polem wyszukiwania: strona główna,
-            // a po kliknięciu kategorii — folder wypełniający ten obszar.
+            // The whole menu surface below the search field: the home page,
+            // and after clicking a category — a folder filling this area.
             QQC2.StackView {
                 id: stack
                 Layout.fillWidth: true
@@ -203,15 +204,15 @@ FocusScope {
                     id: kuser
                 }
 
-                // Użytkownik jako przycisk: otwiera Ustawienia systemowe
-                // na module Użytkownicy (jak w Kickoffie).
+                // The user as a button: opens System Settings on the
+                // Users module (like in Kickoff).
                 PC3.ToolButton {
                     id: userButton
 
                     readonly property string displayName:
                         kuser.fullName.length > 0 ? kuser.fullName : kuser.loginName
 
-                    text: i18n("Otwórz ustawienia użytkowników")
+                    text: i18n("Open user settings")
 
                     QQC2.ToolTip.text: text
                     QQC2.ToolTip.visible: hovered
@@ -252,7 +253,7 @@ FocusScope {
                     icon.width: Math.round(Kirigami.Units.iconSizes.smallMedium * root.uiScale)
                     icon.height: Math.round(Kirigami.Units.iconSizes.smallMedium * root.uiScale)
                     display: QQC2.AbstractButton.IconOnly
-                    text: i18n("Zasilanie")
+                    text: i18n("Power")
 
                     QQC2.ToolTip.text: text
                     QQC2.ToolTip.visible: hovered
@@ -264,8 +265,8 @@ FocusScope {
         }
     }
 
-    // Menu zasilania: akcje systemowe kickera + opcjonalny Tryb Game Mode
-    // (zestaw akcji konfigurowalny w ustawieniach plasmoidu).
+    // Power menu: kicker's system actions + an optional Game Mode entry
+    // (the action set is configurable in the plasmoid settings).
     PowerMenu {
         id: powerMenu
         visualParent: powerButton

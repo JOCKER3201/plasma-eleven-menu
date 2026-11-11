@@ -1,95 +1,97 @@
 # plasma-eleven-menu
 
-Menu aplikacji (plasmoid) dla **KDE Plasma 6** w układzie znanym z menu Start
-Windows 11 — ale zasilane prawdziwymi danymi menu KDE.
+An application menu (plasmoid) for **KDE Plasma 6** with the layout known from
+the Windows 11 Start menu — but powered by real KDE menu data.
 
-> **Autorstwo / AI:** kod tego projektu został w całości wygenerowany przez
-> **Claude (AI firmy Anthropic)** na zamówienie i pod kierunkiem autora
-> repozytorium. Commity z kodem AI są oznaczane w opisie.
+> **Authorship / AI:** the code in this project was generated entirely by
+> **Claude (an AI by Anthropic)**, commissioned and directed by the repository
+> author. Commits containing AI code are marked in their descriptions.
 
-## Co robi
+## What it does
 
-- **Przypięte** — sekcja ulubionych aplikacji (baza ulubionych KDE,
-  ta sama co w Kickoffie).
-- **Menu kontekstowe** — prawy przycisk (lub długie przytrzymanie) na
-  aplikacji otwiera standardowe menu launchera KDE z akcjami z backendu
-  kicker: Dodaj na pulpit, Przypnij do paska zadań, akcje aplikacji
-  (np. Add to Steam), ostatnie dokumenty, Edytuj programy… — plus
-  Przypnij/Odepnij od sekcji Przypięte.
-- **Wszystko** — siatka kafelków kategorii **dokładnie takich, jak w zwykłym
-  menu KDE** (standardowe kategorie XDG z backendu `kicker`, np. Grafika,
-  Internet, Multimedia, Narzędzia, System…). Każdy kafelek pokazuje podgląd
-  2×2 ikon pierwszych aplikacji.
-- **Folder kategorii** — kliknięcie kafelka otwiera folder **wypełniający całą
-  powierzchnię menu** (jak w Windows 11), z nagłówkiem i przyciskiem Wstecz.
-  Podkategorie otwierają się tak samo, rekurencyjnie.
-- **Wyszukiwanie** — pole na górze (aplikacje + ustawienia przez KRunner);
-  Enter uruchamia najlepszy wynik.
-- **Stopka** — awatar i nazwa użytkownika oraz przycisk zasilania z menu:
-  Zablokuj / Uśpij / Zamknij / Uruchom ponownie (zestaw konfigurowalny).
-- **Tryb pełnoekranowy** — przycisk w prawym górnym narożniku (w obu
-  trybach) przełącza między popupem a **pełnoekranowym dialogiem
-  plazmowym**, otwieranym i zamykanym lustrzaną animacją od/do środka
-  ekranu. Dialog żyje w warstwie zwykłych okien, więc panele Plasmy
-  pozostają widoczne i klikalne **nad** menu (nie są przykrywane jak
-  w innych launcherach), panele z autoukrywaniem wysuwają się na czas
-  otwarcia, a zawartość menu ma marginesy wyliczone z geometrii paneli —
-  nic nie wpada pod panel. Wybrany tryb jest zapamiętywany; ikona
-  w panelu i klawisz Super otwierają zawsze dokładnie jeden, aktualnie
-  wybrany wariant.
-- **Ustawienia** (prawy przycisk na ikonie → *Konfiguruj…*): ikona panelu,
-  widoczność sekcji Przypięte, akcje menu zasilania.
-- Nawigacja: `Esc` cofa (czyści wyszukiwanie → zamyka folder → zamyka menu).
-  **Oba boczne (kciukowe) przyciski myszy** cofają do poprzedniego widoku;
-  nie wywołują w menu żadnych innych akcji.
+- **Pinned** — a favorites section (the KDE favorites database,
+  the same one Kickoff uses).
+- **Context menu** — right click (or long press) on an application opens the
+  standard KDE launcher menu with actions from the kicker backend:
+  Add to Desktop, Pin to Task Manager, application actions
+  (e.g. Add to Steam), recent documents, Edit Applications… — plus
+  Pin to/Unpin from the Pinned section.
+- **All** — a grid of category tiles **exactly as in the regular KDE menu**
+  (standard XDG categories from the `kicker` backend, e.g. Graphics,
+  Internet, Multimedia, Utilities, System…). Each tile shows a 2×2 icon
+  preview of the first few applications.
+- **Category folder** — clicking a tile opens a folder **filling the whole
+  menu surface** (like in Windows 11), with a header and a Back button.
+  Subcategories open the same way, recursively.
+- **Search** — a field at the top (applications + settings via KRunner);
+  Enter launches the best match.
+- **Footer** — the user's avatar and name, and a power button with a menu:
+  Lock / Sleep / Shut Down / Restart (the set is configurable).
+- **Full-screen mode** — a button in the top-right corner (in both modes)
+  switches between the popup and a **full-screen Plasma dialog**, opened
+  and closed with a mirrored animation from/to the center of the screen.
+  The dialog lives in the regular window layer, so Plasma panels stay
+  visible and clickable **above** the menu (they are not covered as in
+  other launchers), auto-hiding panels slide out while the menu is open,
+  and the menu content gets margins computed from the panel geometry —
+  nothing ends up underneath a panel. The chosen mode is remembered; the
+  panel icon and the Super key always open exactly one, currently
+  selected variant.
+- **Settings** (right click on the icon → *Configure…*): panel icon,
+  visibility of the Pinned section, power menu actions.
+- Navigation: `Esc` goes back (clears the search → closes the folder →
+  closes the menu). **Both side (thumb) mouse buttons** go back to the
+  previous view; they trigger no other actions inside the menu.
 
-## Wymagania
+## Requirements
 
-- KDE Plasma 6 (tworzone i sprawdzane na 6.7.5),
-- `kirigami-addons` (okrągły awatar — na systemach z Plasmą zwykle już jest),
-- backend `org.kde.plasma.private.kicker` (część plasma-desktop, zawsze obecny).
+- KDE Plasma 6 (developed and tested on 6.7.5),
+- `kirigami-addons` (round avatar — usually already present on systems
+  with Plasma),
+- the `org.kde.plasma.private.kicker` backend (part of plasma-desktop,
+  always present).
 
-## Instalacja
+## Installation
 
 ```bash
 git clone https://github.com/JOCKER3201/plasma-eleven-menu.git
 cd plasma-eleven-menu
 
-make install        # instalacja/aktualizacja dla bieżącego użytkownika
-sudo make install   # instalacja/aktualizacja globalna (systemowa)
-make uninstall      # usunięcie (sudo make uninstall — wersji globalnej)
-make package        # archiwum plasma-eleven-menu-<wersja>.tar.xz
+make install        # install/update for the current user
+sudo make install   # global (system-wide) install/update
+make uninstall      # removal (sudo make uninstall — for the global version)
+make package        # plasma-eleven-menu-<version>.tar.xz archive
 ```
 
-Ręcznie, bez make:
+Manually, without make:
 
 ```bash
 kpackagetool6 --type Plasma/Applet --install package
-# aktualizacja po zmianach:
+# update after changes:
 kpackagetool6 --type Plasma/Applet --upgrade package
-# usunięcie:
+# removal:
 kpackagetool6 --type Plasma/Applet --remove com.github.jocker3201.elevenmenu
 ```
 
-Potem: tryb edycji pulpitu → *Dodaj elementy interfejsu* → **plasma-eleven-menu**
-(przeciągnij na panel). Można też ustawić jako *Alternatywę* istniejącego
-przycisku menu (prawy przycisk na ikonie menu → *Pokaż alternatywy…*).
+Then: desktop edit mode → *Add Widgets* → **plasma-eleven-menu**
+(drag onto the panel). It can also be set as an *Alternative* of an
+existing menu button (right click on the menu icon → *Show Alternatives…*).
 
-Po podmianie plików już zainstalowanego plasmoidu trzeba zrestartować
-plasmashell: `systemctl --user restart plasma-plasmashell.service`.
+After replacing the files of an already installed plasmoid, plasmashell
+must be restarted: `systemctl --user restart plasma-plasmashell.service`.
 
-## Znane ograniczenia (v0.1)
+## Known limitations (v0.1)
 
-- Brak sekcji „Ostatnie" (do zrobienia: `showRecentApps`/`showRecentDocs`).
-- Nawigacja klawiaturą pełna tylko w wyszukiwarce; siatki obsługiwane myszą.
-- Brak przeciągania kafelków (zmiana kolejności Przypiętych).
+- No "Recent" section (to do: `showRecentApps`/`showRecentDocs`).
+- Full keyboard navigation only in the search view; grids are mouse-driven.
+- No tile drag-and-drop (reordering of Pinned).
 
-## Licencja
+## License
 
-**MIT** — cały kod w tym repozytorium jest autorski: pisany od zera na
-podstawie API modułu (plik `kickerplugin.qmltypes`), bez kodu kopiowanego
-z Kickoffa/Kickera; repozytorium nie zawiera i nie dystrybuuje żadnego kodu
-KDE. W czasie działania plasmoid importuje moduł QML
-`org.kde.plasma.private.kicker` (GPL, część plasma-desktop) — tak jak każdy
-plasmoid korzysta z bibliotek Plasmy; licencja MIT jest zgodna z GPL, więc
-nie nakłada ograniczeń na plasmashella ładującego ten pakiet.
+**MIT** — all code in this repository is original: written from scratch
+against the module API (the `kickerplugin.qmltypes` file), with no code
+copied from Kickoff/Kicker; the repository does not contain or distribute
+any KDE code. At runtime the plasmoid imports the QML module
+`org.kde.plasma.private.kicker` (GPL, part of plasma-desktop) — just like
+any plasmoid uses the Plasma libraries; the MIT license is GPL-compatible,
+so it places no restrictions on plasmashell loading this package.

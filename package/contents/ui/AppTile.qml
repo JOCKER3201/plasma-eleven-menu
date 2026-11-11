@@ -7,21 +7,21 @@ import QtQuick
 import QtQuick.Controls as QQC2
 import org.kde.kirigami as Kirigami
 
-// Kafelek aplikacji: ikona z podpisem, podświetlenie po najechaniu,
-// menu „Przypnij/Odepnij" pod prawym przyciskiem.
+// Application tile: an icon with a caption, a highlight on hover,
+// a "Pin/Unpin" menu under the right mouse button.
 QQC2.AbstractButton {
     id: tile
 
     property var iconSource
     property string favoriteId: ""
     property int iconSize: Kirigami.Units.iconSizes.medium
-    // Ustawiane przez delegat siatki: kafelek wskazany strzałkami
-    // (w trybie nawigacji klawiaturą) — podświetlany jak hover.
+    // Set by the grid delegate: the tile pointed at with the arrow keys
+    // (in keyboard navigation mode) — highlighted like hover.
     property bool keyboardSelected: false
 
     signal triggered()
-    // Akcja z menu kontekstowego do wykonania na modelu źródłowym wiersza
-    // (trigger musi wywołać właściciel modelu, nie kafelek).
+    // A context-menu action to be executed on the row's source model
+    // (trigger must be called by the model's owner, not by the tile).
     signal actionTriggered(string actionId, var argument)
 
     hoverEnabled: true
@@ -55,9 +55,9 @@ QQC2.AbstractButton {
 
     background: Rectangle {
         radius: Kirigami.Units.cornerRadius
-        // W trybie nawigacji klawiaturą hover pod kursorem NIE świeci —
-        // podświetlony (tym samym kolorem) jest wyłącznie kafelek
-        // wybrany strzałkami.
+        // In keyboard navigation mode, hover under the cursor does NOT
+        // light up — only the tile selected with the arrow keys is
+        // highlighted (with the same color).
         color: tile.pressed
             ? Qt.alpha(Kirigami.Theme.textColor, 0.15)
             : tile.keyboardSelected || tile.visualFocus
@@ -66,9 +66,9 @@ QQC2.AbstractButton {
                 : "transparent"
     }
 
-    // Standardowe menu kontekstowe launchera: akcje z backendu kicker
-    // (Dodaj na pulpit, Przypnij do paska zadań, akcje aplikacji, ostatnie
-    // dokumenty, Edytuj programy…) + nasze Przypnij/Odepnij na końcu.
+    // The standard launcher context menu: actions from the kicker backend
+    // (Add to Desktop, Pin to Task Manager, application actions, recent
+    // documents, Edit Applications…) + our Pin/Unpin at the end.
     function openContextMenu(pos) {
         let list = []
         if (model.hasActionList) {
@@ -84,8 +84,8 @@ QQC2.AbstractButton {
             const isFav = rootModel.favoritesModel.isFavorite(favoriteId)
             list.push({
                 text: isFav
-                    ? i18n("Odepnij od sekcji Przypięte")
-                    : i18n("Przypnij do sekcji Przypięte"),
+                    ? i18n("Unpin from Pinned section")
+                    : i18n("Pin to Pinned section"),
                 icon: isFav ? "window-unpin" : "pin",
                 actionId: "_eleven_toggle_favorite"
             })
@@ -112,15 +112,16 @@ QQC2.AbstractButton {
         actionTriggered(actionId, argument)
     }
 
-    // Prawy przycisk przejmowany twardo od wciśnięcia (exclusive grab,
-    // bez progu ruchu jak w TapHandler) — zawsze i wyłącznie otwiera menu.
+    // The right button is grabbed firmly from the press (an exclusive
+    // grab, without TapHandler's movement threshold) — it always and only
+    // opens the menu.
     MouseArea {
         anchors.fill: parent
         acceptedButtons: Qt.RightButton
         onClicked: mouse => tile.openContextMenu(Qt.point(mouse.x, mouse.y))
     }
 
-    // Długie przytrzymanie (dotyk) — wbudowany gest przycisku.
+    // Long press (touch) — the button's built-in gesture.
     onPressAndHold: openContextMenu(Qt.point(width / 2, height / 2))
 
     ActionsMenu {

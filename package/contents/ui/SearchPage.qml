@@ -15,7 +15,7 @@ Item {
 
     objectName: "searchPage"
 
-    // Wywoływane Enterem z pola wyszukiwania: uruchom najlepszy wynik.
+    // Invoked with Enter from the search field: launch the best match.
     function activateFirst() {
         if (resultsList.count > 0) {
             resultsList.model.trigger(0, "", null)
@@ -23,7 +23,7 @@ Item {
         }
     }
 
-    // Wywoływane strzałką w dół z pola wyszukiwania.
+    // Invoked with the down arrow from the search field.
     function focusFirst() {
         root.keyboardNav = true
         if (resultsList.count > 0) {
@@ -44,7 +44,7 @@ Item {
         keyNavigationEnabled: true
         highlightMoveDuration: 0
 
-        // mergeResults: true — wszystkie wyniki w jednym podmodelu (wiersz 0).
+        // mergeResults: true — all results in one submodel (row 0).
         model: runnerModel.count > 0 ? runnerModel.modelForRow(0) : null
 
         PC3.ScrollBar.vertical: PC3.ScrollBar {}
@@ -52,16 +52,16 @@ Item {
         delegate: PC3.ItemDelegate {
             id: resultDelegate
 
-            // Attached property czytane we własnym elemencie (przez obcy
-            // obiekt nie działa) — do podświetlenia w tle.
+            // An attached property read within its own element (it does not
+            // work through a foreign object) — for the background highlight.
             readonly property bool isCurrent: ListView.isCurrentItem
 
             width: resultsList.width
             text: model.display
 
-            // Jedno podświetlenie naraz, IDENTYCZNE dla myszy
-            // i klawiatury (ten sam kolor co na kafelkach): w trybie
-            // nawigacji strzałkami świeci wybrany wiersz, hover gaśnie.
+            // One highlight at a time, IDENTICAL for mouse and keyboard
+            // (the same color as on the tiles): in arrow-key navigation
+            // mode the selected row lights up and hover goes out.
             background: Rectangle {
                 radius: Kirigami.Units.cornerRadius
                 color: resultDelegate.pressed
@@ -78,7 +78,7 @@ Item {
                 root.closeMenu()
             }
 
-            // Standardowe menu kontekstowe launchera, jak na kafelkach.
+            // The standard launcher context menu, like on the tiles.
             function openContextMenu(pos) {
                 if (!model.hasActionList) {
                     return
@@ -133,9 +133,10 @@ Item {
                         text: model.description ?? ""
                         visible: text.length > 0
                         elide: Text.ElideRight
-                        // Mniejszy font opisu skalowany razem z interfejsem
-                        // (jawnie — przypisanie całego fontu wyłącza
-                        // dziedziczenie pointSize z menu).
+                        // The smaller description font is scaled together
+                        // with the interface (explicitly — assigning the
+                        // whole font disables pointSize inheritance from
+                        // the menu).
                         font.pointSize: Kirigami.Theme.smallFont.pointSize * root.fontScale
                     }
                 }
@@ -165,6 +166,6 @@ Item {
         width: parent.width - Kirigami.Units.gridUnit * 4
         visible: resultsList.count === 0 && !runnerModel.querying
         iconName: "edit-none"
-        text: i18n("Brak wyników")
+        text: i18n("No results")
     }
 }
